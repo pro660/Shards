@@ -1,0 +1,162 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1680" height="1760" viewBox="0 0 1680 1760">
+<rect width="1680" height="1760" fill="#f5f7fc"/>
+<rect x="60" y="42" width="120" height="38" rx="19" fill="#e5edff" stroke="#e5edff" stroke-width="1"/>
+<text x="76" y="65.15" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="700" fill="#2563eb">그림 2</text>
+<text x="60" y="138.4" font-family="Malgun Gothic, sans-serif" font-size="44" font-weight="700" fill="#17263f">테이블 4종과 튜플의 구조</text>
+<text x="60" y="183.55" font-family="Malgun Gothic, sans-serif" font-size="23" font-weight="400" fill="#56657c">재배치 완료 후의 예시 · 컬럼명 일부와 상태값은 설계 제안 · 실제 DDL은 아직 구현 전</text>
+<rect x="45" y="222" width="800" height="1080" rx="22" fill="#edf2fc" stroke="#d5dff1" stroke-width="1"/>
+<text x="70" y="269.65" font-family="Malgun Gothic, sans-serif" font-size="29" font-weight="700" fill="#2563eb">메타DB · 내 PC</text>
+<text x="70" y="307.7" font-family="Malgun Gothic, sans-serif" font-size="22" font-weight="400" fill="#56657c">샤드 주소록 / 현재 버킷 소유권 / 재배치 이력</text>
+<rect x="70" y="345" width="335" height="298" rx="18" fill="#ffffff" stroke="#dbe2ee" stroke-width="1"/>
+<text x="90" y="388.65" font-family="Malgun Gothic, sans-serif" font-size="29" font-weight="700" fill="#17263f">shards</text>
+<text x="90" y="425.0" font-family="Malgun Gothic, sans-serif" font-size="20" font-weight="400" fill="#56657c">등록된 3행 중 C행 예시</text>
+<rect x="88" y="446" width="299" height="180" rx="0" fill="#ffffff" stroke="#dbe2ee" stroke-width="1"/>
+<rect x="88" y="446" width="299" height="36" rx="0" fill="#edf2fb" stroke="#edf2fb" stroke-width="1"/>
+<text x="101" y="469.15" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="700" fill="#17263f">컬럼</text>
+<text x="305" y="469.15" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="700" fill="#17263f">값</text>
+<text x="101" y="505.15" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#17263f">shard_id  [PK]</text>
+<text x="305" y="505.15" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#17263f">3</text>
+<polyline points="88,482 387,482" fill="none" stroke="#dbe2ee" stroke-width="1"/>
+<text x="101" y="541.15" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#17263f">shard_name</text>
+<text x="305" y="541.15" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#17263f">C</text>
+<polyline points="88,518 387,518" fill="none" stroke="#dbe2ee" stroke-width="1"/>
+<text x="101" y="577.15" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#17263f">connection_key</text>
+<text x="305" y="577.15" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#17263f">shardC</text>
+<polyline points="88,554 387,554" fill="none" stroke="#dbe2ee" stroke-width="1"/>
+<text x="101" y="613.15" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#17263f">status</text>
+<text x="305" y="613.15" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#17263f">ACTIVE</text>
+<polyline points="88,590 387,590" fill="none" stroke="#dbe2ee" stroke-width="1"/>
+<rect x="477" y="345" width="343" height="298" rx="18" fill="#ffffff" stroke="#dbe2ee" stroke-width="1"/>
+<text x="497" y="388.65" font-family="Malgun Gothic, sans-serif" font-size="29" font-weight="700" fill="#17263f">bucket_mapping</text>
+<text x="497" y="425.0" font-family="Malgun Gothic, sans-serif" font-size="20" font-weight="400" fill="#56657c">16행 중 버킷 7의 행 예시</text>
+<rect x="495" y="446" width="307" height="180" rx="0" fill="#ffffff" stroke="#dbe2ee" stroke-width="1"/>
+<rect x="495" y="446" width="307" height="36" rx="0" fill="#edf2fb" stroke="#edf2fb" stroke-width="1"/>
+<text x="508" y="469.15" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="700" fill="#17263f">컬럼</text>
+<text x="705" y="469.15" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="700" fill="#17263f">값</text>
+<text x="508" y="505.15" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#17263f">bucket_id  [PK]</text>
+<text x="705" y="505.15" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#17263f">7</text>
+<polyline points="495,482 802,482" fill="none" stroke="#dbe2ee" stroke-width="1"/>
+<text x="508" y="541.15" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#17263f">shard_id  [FK]</text>
+<text x="705" y="541.15" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#17263f">3</text>
+<polyline points="495,518 802,518" fill="none" stroke="#dbe2ee" stroke-width="1"/>
+<text x="508" y="577.15" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#17263f">state</text>
+<text x="705" y="577.15" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#17263f">NORMAL</text>
+<polyline points="495,554 802,554" fill="none" stroke="#dbe2ee" stroke-width="1"/>
+<text x="508" y="613.15" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#17263f">version</text>
+<text x="705" y="613.15" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#17263f">2</text>
+<polyline points="495,590 802,590" fill="none" stroke="#dbe2ee" stroke-width="1"/>
+<polyline points="477,536 441,536 441,500 406,500" fill="none" stroke="#2563eb" stroke-width="3"/>
+<polygon points="406,500 417.7058123305848,494.345448056554 417.7058123305848,505.654551943446" fill="#2563eb"/>
+<text x="418" y="483.6" font-family="Malgun Gothic, sans-serif" font-size="16" font-weight="700" fill="#2563eb">1:N</text>
+<polyline points="240,747 240,654" fill="none" stroke="#2563eb" stroke-width="3"/>
+<polygon points="240,654 245.654551943446,665.7058123305848 234.345448056554,665.7058123305848" fill="#2563eb"/>
+<polyline points="649,747 649,654" fill="none" stroke="#2563eb" stroke-width="3"/>
+<polygon points="649,654 654.654551943446,665.7058123305848 643.345448056554,665.7058123305848" fill="#2563eb"/>
+<rect x="79" y="673" width="337" height="58" rx="0" fill="#edf2fc" stroke="#edf2fc" stroke-width="1"/>
+<text x="93" y="691.15" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#2563eb">출발·도착 샤드 → shards</text>
+<text x="93" y="716.15" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#2563eb">각 관계는 1 : N</text>
+<rect x="493" y="673" width="324" height="58" rx="0" fill="#edf2fc" stroke="#edf2fc" stroke-width="1"/>
+<text x="506" y="691.15" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#2563eb">버킷 → bucket_mapping</text>
+<text x="506" y="716.15" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#2563eb">한 버킷의 과거 작업은 여러 건</text>
+<rect x="70" y="747" width="750" height="492" rx="18" fill="#ffffff" stroke="#dbe2ee" stroke-width="1"/>
+<text x="94" y="791.65" font-family="Malgun Gothic, sans-serif" font-size="29" font-weight="700" fill="#17263f">migration_jobs</text>
+<text x="94" y="828.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="400" fill="#56657c">버킷 7을 A에서 C로 옮긴 작업 한 행</text>
+<rect x="94" y="854" width="702" height="370" rx="0" fill="#ffffff" stroke="#dbe2ee" stroke-width="1"/>
+<rect x="94" y="854" width="702" height="37" rx="0" fill="#edf2fb" stroke="#edf2fb" stroke-width="1"/>
+<text x="107" y="878.0" font-family="Malgun Gothic, sans-serif" font-size="20" font-weight="700" fill="#17263f">핵심 컬럼</text>
+<text x="447" y="878.0" font-family="Malgun Gothic, sans-serif" font-size="20" font-weight="700" fill="#17263f">값 예시</text>
+<text x="107" y="915.0" font-family="Malgun Gothic, sans-serif" font-size="20" font-weight="400" fill="#17263f">job_id  [PK]</text>
+<text x="447" y="915.0" font-family="Malgun Gothic, sans-serif" font-size="20" font-weight="400" fill="#17263f">M1 (작업 ID 별칭)</text>
+<polyline points="94,891 796,891" fill="none" stroke="#dbe2ee" stroke-width="1"/>
+<text x="107" y="952.0" font-family="Malgun Gothic, sans-serif" font-size="20" font-weight="400" fill="#17263f">bucket_id  [FK]</text>
+<text x="447" y="952.0" font-family="Malgun Gothic, sans-serif" font-size="20" font-weight="400" fill="#17263f">7</text>
+<polyline points="94,928 796,928" fill="none" stroke="#dbe2ee" stroke-width="1"/>
+<text x="107" y="989.0" font-family="Malgun Gothic, sans-serif" font-size="20" font-weight="400" fill="#17263f">source_shard_id  [FK]</text>
+<text x="447" y="989.0" font-family="Malgun Gothic, sans-serif" font-size="20" font-weight="400" fill="#17263f">1 (A)</text>
+<polyline points="94,965 796,965" fill="none" stroke="#dbe2ee" stroke-width="1"/>
+<text x="107" y="1026.0" font-family="Malgun Gothic, sans-serif" font-size="20" font-weight="400" fill="#17263f">target_shard_id  [FK]</text>
+<text x="447" y="1026.0" font-family="Malgun Gothic, sans-serif" font-size="20" font-weight="400" fill="#17263f">3 (C)</text>
+<polyline points="94,1002 796,1002" fill="none" stroke="#dbe2ee" stroke-width="1"/>
+<text x="107" y="1063.0" font-family="Malgun Gothic, sans-serif" font-size="20" font-weight="400" fill="#17263f">phase</text>
+<text x="447" y="1063.0" font-family="Malgun Gothic, sans-serif" font-size="20" font-weight="400" fill="#17263f">COMPLETED</text>
+<polyline points="94,1039 796,1039" fill="none" stroke="#dbe2ee" stroke-width="1"/>
+<text x="107" y="1100.0" font-family="Malgun Gothic, sans-serif" font-size="20" font-weight="400" fill="#17263f">checkpoint</text>
+<text x="447" y="1100.0" font-family="Malgun Gothic, sans-serif" font-size="20" font-weight="400" fill="#17263f">마지막으로 복사한 주문 위치</text>
+<polyline points="94,1076 796,1076" fill="none" stroke="#dbe2ee" stroke-width="1"/>
+<text x="107" y="1137.0" font-family="Malgun Gothic, sans-serif" font-size="20" font-weight="400" fill="#17263f">verification_result</text>
+<text x="447" y="1137.0" font-family="Malgun Gothic, sans-serif" font-size="20" font-weight="400" fill="#17263f">ID · 건수 · 내용 일치</text>
+<polyline points="94,1113 796,1113" fill="none" stroke="#dbe2ee" stroke-width="1"/>
+<text x="107" y="1174.0" font-family="Malgun Gothic, sans-serif" font-size="20" font-weight="400" fill="#17263f">error</text>
+<text x="447" y="1174.0" font-family="Malgun Gothic, sans-serif" font-size="20" font-weight="400" fill="#17263f">NULL (오류 없음)</text>
+<polyline points="94,1150 796,1150" fill="none" stroke="#dbe2ee" stroke-width="1"/>
+<text x="107" y="1211.0" font-family="Malgun Gothic, sans-serif" font-size="20" font-weight="400" fill="#17263f">started_at / finished_at</text>
+<text x="447" y="1211.0" font-family="Malgun Gothic, sans-serif" font-size="20" font-weight="400" fill="#17263f">작업 시작 / 종료 시각</text>
+<polyline points="94,1187 796,1187" fill="none" stroke="#dbe2ee" stroke-width="1"/>
+<text x="70" y="1277.0" font-family="Malgun Gothic, sans-serif" font-size="20" font-weight="400" fill="#56657c">A=1, B=2, C=3 · 비밀번호는 메타 테이블에 저장하지 않음</text>
+<rect x="900" y="222" width="735" height="1080" rx="22" fill="#f1ecfa" stroke="#e0d7ee" stroke-width="1"/>
+<text x="925" y="269.65" font-family="Malgun Gothic, sans-serif" font-size="29" font-weight="700" fill="#7946c9">주문 DB · A / B / C</text>
+<text x="925" y="307.7" font-family="Malgun Gothic, sans-serif" font-size="22" font-weight="400" fill="#56657c">각 DB에 같은 구조의 orders 테이블 1개</text>
+<text x="925" y="341.7" font-family="Malgun Gothic, sans-serif" font-size="22" font-weight="400" fill="#56657c">아래는 이동 완료 후 C에 있는 주문 O1 한 행</text>
+<rect x="925" y="386" width="685" height="644" rx="18" fill="#ffffff" stroke="#dbe2ee" stroke-width="1"/>
+<text x="949" y="434.2" font-family="Malgun Gothic, sans-serif" font-size="32" font-weight="700" fill="#17263f">orders</text>
+<rect x="1325" y="408" width="260" height="38" rx="19" fill="#f1eafa" stroke="#f1eafa" stroke-width="1"/>
+<text x="1341" y="431.15" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="700" fill="#7946c9">주문 O1의 전체 7개 컬럼</text>
+<rect x="949" y="471" width="637" height="432" rx="0" fill="#ffffff" stroke="#dbe2ee" stroke-width="1"/>
+<rect x="949" y="471" width="637" height="54" rx="0" fill="#edf2fb" stroke="#edf2fb" stroke-width="1"/>
+<text x="962" y="503.3" font-family="Malgun Gothic, sans-serif" font-size="18" font-weight="700" fill="#17263f">컬럼</text>
+<text x="1187" y="503.3" font-family="Malgun Gothic, sans-serif" font-size="18" font-weight="700" fill="#17263f">한 튜플의 값</text>
+<text x="962" y="557.3" font-family="Malgun Gothic, sans-serif" font-size="18" font-weight="400" fill="#17263f">order_id  [PK]</text>
+<text x="1187" y="557.3" font-family="Malgun Gothic, sans-serif" font-size="18" font-weight="400" fill="#17263f">0199ab10-0000-4000-8000-000000000001</text>
+<polyline points="949,525 1586,525" fill="none" stroke="#dbe2ee" stroke-width="1"/>
+<text x="962" y="611.3" font-family="Malgun Gothic, sans-serif" font-size="18" font-weight="400" fill="#17263f">user_id</text>
+<text x="1187" y="611.3" font-family="Malgun Gothic, sans-serif" font-size="18" font-weight="400" fill="#17263f">1001</text>
+<polyline points="949,579 1586,579" fill="none" stroke="#dbe2ee" stroke-width="1"/>
+<text x="962" y="665.3" font-family="Malgun Gothic, sans-serif" font-size="18" font-weight="400" fill="#17263f">bucket_id</text>
+<text x="1187" y="665.3" font-family="Malgun Gothic, sans-serif" font-size="18" font-weight="400" fill="#17263f">7</text>
+<polyline points="949,633 1586,633" fill="none" stroke="#dbe2ee" stroke-width="1"/>
+<text x="962" y="719.3" font-family="Malgun Gothic, sans-serif" font-size="18" font-weight="400" fill="#17263f">amount</text>
+<text x="1187" y="719.3" font-family="Malgun Gothic, sans-serif" font-size="18" font-weight="400" fill="#17263f">12000.00</text>
+<polyline points="949,687 1586,687" fill="none" stroke="#dbe2ee" stroke-width="1"/>
+<text x="962" y="773.3" font-family="Malgun Gothic, sans-serif" font-size="18" font-weight="400" fill="#17263f">status</text>
+<text x="1187" y="773.3" font-family="Malgun Gothic, sans-serif" font-size="18" font-weight="400" fill="#17263f">CREATED</text>
+<polyline points="949,741 1586,741" fill="none" stroke="#dbe2ee" stroke-width="1"/>
+<text x="962" y="827.3" font-family="Malgun Gothic, sans-serif" font-size="18" font-weight="400" fill="#17263f">created_at</text>
+<text x="1187" y="827.3" font-family="Malgun Gothic, sans-serif" font-size="18" font-weight="400" fill="#17263f">2026-10-28T09:00:00Z</text>
+<polyline points="949,795 1586,795" fill="none" stroke="#dbe2ee" stroke-width="1"/>
+<text x="962" y="881.3" font-family="Malgun Gothic, sans-serif" font-size="18" font-weight="400" fill="#17263f">updated_at</text>
+<text x="1187" y="881.3" font-family="Malgun Gothic, sans-serif" font-size="18" font-weight="400" fill="#17263f">2026-10-28T09:00:00Z</text>
+<polyline points="949,849 1586,849" fill="none" stroke="#dbe2ee" stroke-width="1"/>
+<text x="949" y="948.0" font-family="Malgun Gothic, sans-serif" font-size="20" font-weight="400" fill="#56657c">UUID: 주문 하나를 식별하는 키</text>
+<text x="949" y="983.0" font-family="Malgun Gothic, sans-serif" font-size="20" font-weight="400" fill="#56657c">시간의 Z는 UTC 표기 · 금액 정밀도·상태 전이는 추후 확정</text>
+<rect x="925" y="1056" width="685" height="213" rx="18" fill="#fff8e8" stroke="#f4dfb7" stroke-width="1"/>
+<text x="949" y="1098.55" font-family="Malgun Gothic, sans-serif" font-size="23" font-weight="700" fill="#a65c00">user_id와 bucket_id는 여기서 FK가 아님</text>
+<text x="949" y="1140.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="400" fill="#17263f">user_id: 가상 주문 소유자이며 해시 입력값</text>
+<text x="949" y="1177.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="400" fill="#17263f">bucket_id: 해시로 계산해 저장하는 논리적 그룹 번호</text>
+<text x="949" y="1214.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="400" fill="#17263f">메타DB와 주문 DB의 일치는 애플리케이션과 검증이 관리</text>
+<polyline points="845,518 900,518" fill="none" stroke="#7946c9" stroke-width="3" stroke-dasharray="10 8"/>
+<polygon points="900,518 888.2941876694152,523.654551943446 888.2941876694152,512.345448056554" fill="#7946c9"/>
+<rect x="778" y="1335" width="822" height="107" rx="18" fill="#eee7f8" stroke="#eee7f8" stroke-width="1"/>
+<text x="800" y="1372.7" font-family="Malgun Gothic, sans-serif" font-size="22" font-weight="700" fill="#7946c9">점선: 매핑을 읽어 샤드를 선택하는 애플리케이션의 연결</text>
+<text x="800" y="1410.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="400" fill="#56657c">서로 다른 DB 사이에 PostgreSQL 외래키를 만들지는 않는다.</text>
+<rect x="60" y="1335" width="688" height="107" rx="18" fill="#e8eefb" stroke="#e8eefb" stroke-width="1"/>
+<text x="83" y="1373.55" font-family="Malgun Gothic, sans-serif" font-size="23" font-weight="700" fill="#2563eb">실선 화살표: 메타DB 안의 FK → 참조 대상</text>
+<text x="83" y="1409.15" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#56657c">PK = 행을 구분하는 기본키 · FK = 다른 행을 참조하는 외래키</text>
+<text x="60" y="1503.8" font-family="Malgun Gothic, sans-serif" font-size="28" font-weight="700" fill="#17263f">개수로 다시 보면</text>
+<rect x="60" y="1529" width="1560" height="192" rx="0" fill="#ffffff" stroke="#dbe2ee" stroke-width="1"/>
+<rect x="60" y="1529" width="1560" height="48" rx="0" fill="#edf2fb" stroke="#edf2fb" stroke-width="1"/>
+<text x="73" y="1558.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="700" fill="#17263f">구분</text>
+<text x="403" y="1558.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="700" fill="#17263f">개수</text>
+<text x="883" y="1558.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="700" fill="#17263f">의미</text>
+<text x="73" y="1606.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="400" fill="#17263f">DB</text>
+<text x="403" y="1606.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="400" fill="#17263f">4개</text>
+<text x="883" y="1606.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="400" fill="#17263f">메타DB + 주문 샤드 A · B · C</text>
+<polyline points="60,1577 1620,1577" fill="none" stroke="#dbe2ee" stroke-width="1"/>
+<text x="73" y="1654.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="400" fill="#17263f">테이블 종류 / 실제 테이블</text>
+<text x="403" y="1654.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="400" fill="#17263f">4종 / 6개</text>
+<text x="883" y="1654.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="400" fill="#17263f">메타 테이블 3개 + orders 테이블 3개</text>
+<polyline points="60,1625 1620,1625" fill="none" stroke="#dbe2ee" stroke-width="1"/>
+<text x="73" y="1702.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="400" fill="#17263f">버킷 / 사용자 / 주문</text>
+<text x="403" y="1702.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="400" fill="#17263f">16개 / 예시 3명 / 예시 4건</text>
+<text x="883" y="1702.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="400" fill="#17263f">버킷은 테이블 수가 아니며, 주문 한 행이 튜플 하나</text>
+<polyline points="60,1673 1620,1673" fill="none" stroke="#dbe2ee" stroke-width="1"/>
+</svg>

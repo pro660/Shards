@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1430" viewBox="0 0 1800 1430">
+<rect width="1800" height="1430" fill="#f5f7fc"/>
+<rect x="60" y="40" width="240" height="38" rx="19" fill="#e5edff" stroke="#e5edff" stroke-width="1"/>
+<text x="76" y="63.15" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="700" fill="#2563eb">주문 행을 묶어서 보기</text>
+<text x="60" y="146.35" font-family="Malgun Gothic, sans-serif" font-size="51" font-weight="700" fill="#17263f">하나의 orders 테이블, 두 가지로 보기</text>
+<text x="60" y="198.95" font-family="Malgun Gothic, sans-serif" font-size="27" font-weight="400" fill="#56657c">왼쪽은 저장되는 행의 모습, 오른쪽은 같은 행을 버킷·사용자별로 묶어 본 모습입니다.</text>
+<rect x="60" y="247" width="760" height="831" rx="18" fill="#ffffff" stroke="#dbe2ee" stroke-width="1"/>
+<text x="85" y="301.05" font-family="Malgun Gothic, sans-serif" font-size="33" font-weight="700" fill="#17263f">① DB에 저장되는 모습</text>
+<text x="85" y="348.25" font-family="Malgun Gothic, sans-serif" font-size="25" font-weight="400" fill="#56657c">샤드 A의 orders 테이블 · 예시 주문 6건</text>
+<rect x="84" y="389" width="712" height="518" rx="0" fill="#ffffff" stroke="#dbe2ee" stroke-width="1"/>
+<rect x="84" y="389" width="712" height="74" rx="0" fill="#edf2fb" stroke="#edf2fb" stroke-width="1"/>
+<text x="97" y="433.95" font-family="Malgun Gothic, sans-serif" font-size="27" font-weight="700" fill="#17263f">order_id</text>
+<text x="239" y="433.95" font-family="Malgun Gothic, sans-serif" font-size="27" font-weight="700" fill="#17263f">user_id</text>
+<text x="407" y="433.95" font-family="Malgun Gothic, sans-serif" font-size="27" font-weight="700" fill="#17263f">bucket_id</text>
+<text x="582" y="433.95" font-family="Malgun Gothic, sans-serif" font-size="27" font-weight="700" fill="#17263f">amount</text>
+<rect x="84" y="463" width="712" height="74" rx="0" fill="#fff1d5" stroke="#fff1d5" stroke-width="1"/>
+<text x="97" y="507.95" font-family="Malgun Gothic, sans-serif" font-size="27" font-weight="400" fill="#17263f">O1</text>
+<text x="239" y="507.95" font-family="Malgun Gothic, sans-serif" font-size="27" font-weight="400" fill="#17263f">1001</text>
+<text x="407" y="507.95" font-family="Malgun Gothic, sans-serif" font-size="27" font-weight="400" fill="#17263f">7</text>
+<text x="582" y="507.95" font-family="Malgun Gothic, sans-serif" font-size="27" font-weight="400" fill="#17263f">12000.00</text>
+<polyline points="84,463 796,463" fill="none" stroke="#dbe2ee" stroke-width="1"/>
+<rect x="84" y="537" width="712" height="74" rx="0" fill="#e9f1ff" stroke="#e9f1ff" stroke-width="1"/>
+<text x="97" y="581.95" font-family="Malgun Gothic, sans-serif" font-size="27" font-weight="400" fill="#17263f">O5</text>
+<text x="239" y="581.95" font-family="Malgun Gothic, sans-serif" font-size="27" font-weight="400" fill="#17263f">3001</text>
+<text x="407" y="581.95" font-family="Malgun Gothic, sans-serif" font-size="27" font-weight="400" fill="#17263f">2</text>
+<text x="582" y="581.95" font-family="Malgun Gothic, sans-serif" font-size="27" font-weight="400" fill="#17263f">3000.00</text>
+<polyline points="84,537 796,537" fill="none" stroke="#dbe2ee" stroke-width="1"/>
+<rect x="84" y="611" width="712" height="74" rx="0" fill="#fff1d5" stroke="#fff1d5" stroke-width="1"/>
+<text x="97" y="655.95" font-family="Malgun Gothic, sans-serif" font-size="27" font-weight="400" fill="#17263f">O3</text>
+<text x="239" y="655.95" font-family="Malgun Gothic, sans-serif" font-size="27" font-weight="400" fill="#17263f">2001</text>
+<text x="407" y="655.95" font-family="Malgun Gothic, sans-serif" font-size="27" font-weight="400" fill="#17263f">7</text>
+<text x="582" y="655.95" font-family="Malgun Gothic, sans-serif" font-size="27" font-weight="400" fill="#17263f">5000.00</text>
+<polyline points="84,611 796,611" fill="none" stroke="#dbe2ee" stroke-width="1"/>
+<rect x="84" y="685" width="712" height="74" rx="0" fill="#e9f1ff" stroke="#e9f1ff" stroke-width="1"/>
+<text x="97" y="729.95" font-family="Malgun Gothic, sans-serif" font-size="27" font-weight="400" fill="#17263f">O6</text>
+<text x="239" y="729.95" font-family="Malgun Gothic, sans-serif" font-size="27" font-weight="400" fill="#17263f">3001</text>
+<text x="407" y="729.95" font-family="Malgun Gothic, sans-serif" font-size="27" font-weight="400" fill="#17263f">2</text>
+<text x="582" y="729.95" font-family="Malgun Gothic, sans-serif" font-size="27" font-weight="400" fill="#17263f">4000.00</text>
+<polyline points="84,685 796,685" fill="none" stroke="#dbe2ee" stroke-width="1"/>
+<rect x="84" y="759" width="712" height="74" rx="0" fill="#fff1d5" stroke="#fff1d5" stroke-width="1"/>
+<text x="97" y="803.95" font-family="Malgun Gothic, sans-serif" font-size="27" font-weight="400" fill="#17263f">O2</text>
+<text x="239" y="803.95" font-family="Malgun Gothic, sans-serif" font-size="27" font-weight="400" fill="#17263f">1001</text>
+<text x="407" y="803.95" font-family="Malgun Gothic, sans-serif" font-size="27" font-weight="400" fill="#17263f">7</text>
+<text x="582" y="803.95" font-family="Malgun Gothic, sans-serif" font-size="27" font-weight="400" fill="#17263f">8000.00</text>
+<polyline points="84,759 796,759" fill="none" stroke="#dbe2ee" stroke-width="1"/>
+<rect x="84" y="833" width="712" height="74" rx="0" fill="#e9f1ff" stroke="#e9f1ff" stroke-width="1"/>
+<text x="97" y="877.95" font-family="Malgun Gothic, sans-serif" font-size="27" font-weight="400" fill="#17263f">O7</text>
+<text x="239" y="877.95" font-family="Malgun Gothic, sans-serif" font-size="27" font-weight="400" fill="#17263f">4001</text>
+<text x="407" y="877.95" font-family="Malgun Gothic, sans-serif" font-size="27" font-weight="400" fill="#17263f">2</text>
+<text x="582" y="877.95" font-family="Malgun Gothic, sans-serif" font-size="27" font-weight="400" fill="#17263f">6000.00</text>
+<polyline points="84,833 796,833" fill="none" stroke="#dbe2ee" stroke-width="1"/>
+<polyline points="84,463 796,463 796,537 84,537 84,463" fill="none" stroke="#a65c00" stroke-width="3"/>
+<text x="86" y="969.65" font-family="Malgun Gothic, sans-serif" font-size="29" font-weight="700" fill="#17263f">가로줄 하나 = 주문 하나 = 튜플 하나</text>
+<text x="86" y="1018.1" font-family="Malgun Gothic, sans-serif" font-size="26" font-weight="700" fill="#a65c00">예: (O1, 1001, 7, 12000.00)</text>
+<text x="837" y="618.0" font-family="Malgun Gothic, sans-serif" font-size="20" font-weight="700" fill="#2563eb">같은 6행</text>
+<polyline points="835,651 933,651" fill="none" stroke="#2563eb" stroke-width="4"/>
+<polygon points="933,651 921.2941876694152,656.654551943446 921.2941876694152,645.345448056554" fill="#2563eb"/>
+<text x="839" y="698.0" font-family="Malgun Gothic, sans-serif" font-size="20" font-weight="700" fill="#2563eb">묶어 보기</text>
+<rect x="950" y="247" width="790" height="831" rx="18" fill="#ffffff" stroke="#dbe2ee" stroke-width="1"/>
+<text x="974" y="297.65" font-family="Malgun Gothic, sans-serif" font-size="29" font-weight="700" fill="#17263f">② 버킷 → 사용자 → 주문으로 묶어 보기</text>
+<text x="974" y="347.4" font-family="Malgun Gothic, sans-serif" font-size="24" font-weight="400" fill="#56657c">왼쪽 orders 테이블의 6행을 그대로 다시 표현</text>
+<rect x="974" y="389" width="742" height="272" rx="16" fill="#fff1d5" stroke="#fff1d5" stroke-width="1"/>
+<text x="998" y="432.95" font-family="Malgun Gothic, sans-serif" font-size="27" font-weight="700" fill="#a65c00">버킷 7  ·  bucket_id = 7인 주문 3건</text>
+<rect x="998" y="465" width="426" height="168" rx="13" fill="#ffffff" stroke="#ffffff" stroke-width="1"/>
+<text x="1018" y="507.1" font-family="Malgun Gothic, sans-serif" font-size="26" font-weight="700" fill="#17263f">사용자 1001</text>
+<text x="1018" y="539.0" font-family="Malgun Gothic, sans-serif" font-size="20" font-weight="400" fill="#56657c">user_id = 1001</text>
+<rect x="1018" y="560" width="173" height="52" rx="10" fill="#fff1d5" stroke="#fff1d5" stroke-width="1"/>
+<text x="1040" y="593.25" font-family="Malgun Gothic, sans-serif" font-size="25" font-weight="700" fill="#a65c00">주문 O1</text>
+<rect x="1209" y="560" width="173" height="52" rx="10" fill="#fff1d5" stroke="#fff1d5" stroke-width="1"/>
+<text x="1231" y="593.25" font-family="Malgun Gothic, sans-serif" font-size="25" font-weight="700" fill="#a65c00">주문 O2</text>
+<rect x="1445" y="465" width="247" height="168" rx="13" fill="#ffffff" stroke="#ffffff" stroke-width="1"/>
+<text x="1465" y="507.1" font-family="Malgun Gothic, sans-serif" font-size="26" font-weight="700" fill="#17263f">사용자 2001</text>
+<text x="1465" y="539.0" font-family="Malgun Gothic, sans-serif" font-size="20" font-weight="400" fill="#56657c">user_id = 2001</text>
+<rect x="1465" y="560" width="207" height="52" rx="10" fill="#fff1d5" stroke="#fff1d5" stroke-width="1"/>
+<text x="1487" y="593.25" font-family="Malgun Gothic, sans-serif" font-size="25" font-weight="700" fill="#a65c00">주문 O3</text>
+<rect x="974" y="684" width="742" height="272" rx="16" fill="#e9f1ff" stroke="#e9f1ff" stroke-width="1"/>
+<text x="998" y="727.95" font-family="Malgun Gothic, sans-serif" font-size="27" font-weight="700" fill="#2563eb">버킷 2  ·  bucket_id = 2인 주문 3건</text>
+<rect x="998" y="760" width="426" height="168" rx="13" fill="#ffffff" stroke="#ffffff" stroke-width="1"/>
+<text x="1018" y="802.1" font-family="Malgun Gothic, sans-serif" font-size="26" font-weight="700" fill="#17263f">사용자 3001</text>
+<text x="1018" y="834.0" font-family="Malgun Gothic, sans-serif" font-size="20" font-weight="400" fill="#56657c">user_id = 3001</text>
+<rect x="1018" y="855" width="173" height="52" rx="10" fill="#e9f1ff" stroke="#e9f1ff" stroke-width="1"/>
+<text x="1040" y="888.25" font-family="Malgun Gothic, sans-serif" font-size="25" font-weight="700" fill="#2563eb">주문 O5</text>
+<rect x="1209" y="855" width="173" height="52" rx="10" fill="#e9f1ff" stroke="#e9f1ff" stroke-width="1"/>
+<text x="1231" y="888.25" font-family="Malgun Gothic, sans-serif" font-size="25" font-weight="700" fill="#2563eb">주문 O6</text>
+<rect x="1445" y="760" width="247" height="168" rx="13" fill="#ffffff" stroke="#ffffff" stroke-width="1"/>
+<text x="1465" y="802.1" font-family="Malgun Gothic, sans-serif" font-size="26" font-weight="700" fill="#17263f">사용자 4001</text>
+<text x="1465" y="834.0" font-family="Malgun Gothic, sans-serif" font-size="20" font-weight="400" fill="#56657c">user_id = 4001</text>
+<rect x="1465" y="855" width="207" height="52" rx="10" fill="#e9f1ff" stroke="#e9f1ff" stroke-width="1"/>
+<text x="1487" y="888.25" font-family="Malgun Gothic, sans-serif" font-size="25" font-weight="700" fill="#2563eb">주문 O7</text>
+<text x="974" y="1007.55" font-family="Malgun Gothic, sans-serif" font-size="23" font-weight="400" fill="#56657c">안쪽 상자는 이해를 돕는 논리적 묶음입니다.</text>
+<text x="974" y="1043.55" font-family="Malgun Gothic, sans-serif" font-size="23" font-weight="400" fill="#56657c">실제 데이터는 왼쪽 표처럼 주문 한 건씩 저장됩니다.</text>
+<rect x="60" y="1110" width="1680" height="170" rx="18" fill="#eaf0fc" stroke="#d9e4f7" stroke-width="1"/>
+<text x="85" y="1158.65" font-family="Malgun Gothic, sans-serif" font-size="29" font-weight="700" fill="#2563eb">표에서 직접 따라가 보면</text>
+<text x="85" y="1210.65" font-family="Malgun Gothic, sans-serif" font-size="29" font-weight="700" fill="#17263f">orders 테이블  →  버킷 7의 주문 3건  →  사용자 1001의 주문 2건  →  주문 O1 한 행</text>
+<text x="85" y="1253.25" font-family="Malgun Gothic, sans-serif" font-size="25" font-weight="400" fill="#17263f">한 버킷에는 여러 사용자의 주문이 함께 들어갈 수 있고, 한 사용자는 여러 주문을 가질 수 있습니다.</text>
+<text x="60" y="1336.55" font-family="Malgun Gothic, sans-serif" font-size="23" font-weight="400" fill="#56657c">예시: 테이블 1개 · 데이터가 있는 버킷 2개 · 사용자 4명 · 주문 튜플 6개</text>
+<text x="60" y="1374.55" font-family="Malgun Gothic, sans-serif" font-size="23" font-weight="400" fill="#56657c">설명용 데이터입니다. 주문번호는 UUID 별칭이며, status·created_at·updated_at 컬럼은 생략했습니다.</text>
+</svg>

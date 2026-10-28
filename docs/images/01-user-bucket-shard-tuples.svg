@@ -1,0 +1,163 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1680" height="1590" viewBox="0 0 1680 1590">
+<rect width="1680" height="1590" fill="#f5f7fc"/>
+<rect x="60" y="42" width="120" height="38" rx="19" fill="#e5edff" stroke="#e5edff" stroke-width="1"/>
+<text x="76" y="65.15" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="700" fill="#2563eb">그림 1</text>
+<text x="60" y="138.4" font-family="Malgun Gothic, sans-serif" font-size="44" font-weight="700" fill="#17263f">사용자와 주문은 어디에 저장될까?</text>
+<text x="60" y="183.55" font-family="Malgun Gothic, sans-serif" font-size="23" font-weight="400" fill="#56657c">설명용 데이터 · 실제 DB 조회 결과가 아님 · 해시 결과와 초기 매핑은 예시로 가정</text>
+<rect x="60" y="225" width="420" height="240" rx="18" fill="#ffffff" stroke="#dbe2ee" stroke-width="1"/>
+<text x="84" y="270.95" font-family="Malgun Gothic, sans-serif" font-size="27" font-weight="700" fill="#17263f">① 가상 주문 사용자</text>
+<text x="84" y="315.7" font-family="Malgun Gothic, sans-serif" font-size="22" font-weight="400" fill="#17263f">user_id = 1001  →  주문 O1, O2</text>
+<text x="84" y="354.7" font-family="Malgun Gothic, sans-serif" font-size="22" font-weight="400" fill="#17263f">user_id = 2001  →  주문 O3</text>
+<text x="84" y="393.7" font-family="Malgun Gothic, sans-serif" font-size="22" font-weight="400" fill="#17263f">user_id = 1002  →  주문 O4</text>
+<text x="84" y="442.0" font-family="Malgun Gothic, sans-serif" font-size="20" font-weight="400" fill="#56657c">별도 users 테이블은 현재 범위에 없음</text>
+<polyline points="490,340 531,340" fill="none" stroke="#2563eb" stroke-width="3"/>
+<polygon points="531,340 519.2941876694152,345.654551943446 519.2941876694152,334.345448056554" fill="#2563eb"/>
+<rect x="545" y="225" width="420" height="240" rx="18" fill="#eef4ff" stroke="#d6e4ff" stroke-width="1"/>
+<text x="570" y="270.95" font-family="Malgun Gothic, sans-serif" font-size="27" font-weight="700" fill="#17263f">② 해시로 버킷 계산</text>
+<text x="570" y="317.4" font-family="Malgun Gothic, sans-serif" font-size="24" font-weight="400" fill="#2563eb">H(1001) = 7</text>
+<text x="570" y="356.4" font-family="Malgun Gothic, sans-serif" font-size="24" font-weight="400" fill="#2563eb">H(2001) = 7</text>
+<text x="570" y="395.4" font-family="Malgun Gothic, sans-serif" font-size="24" font-weight="400" fill="#2563eb">H(1002) = 12</text>
+<text x="570" y="442.0" font-family="Malgun Gothic, sans-serif" font-size="20" font-weight="400" fill="#56657c">H = 해시 규칙 + 0~15로 범위 변환</text>
+<polyline points="975,340 1016,340" fill="none" stroke="#2563eb" stroke-width="3"/>
+<polygon points="1016,340 1004.2941876694152,345.654551943446 1004.2941876694152,334.345448056554" fill="#2563eb"/>
+<rect x="1030" y="225" width="590" height="240" rx="18" fill="#ffffff" stroke="#dbe2ee" stroke-width="1"/>
+<text x="1054" y="270.95" font-family="Malgun Gothic, sans-serif" font-size="27" font-weight="700" fill="#17263f">③ bucket_mapping에서 담당 조회</text>
+<rect x="1054" y="299" width="514" height="132" rx="0" fill="#ffffff" stroke="#dbe2ee" stroke-width="1"/>
+<rect x="1054" y="299" width="514" height="44" rx="0" fill="#edf2fb" stroke="#edf2fb" stroke-width="1"/>
+<text x="1067" y="326.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="700" fill="#17263f">bucket_id</text>
+<text x="1223" y="326.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="700" fill="#17263f">shard_id</text>
+<text x="1418" y="326.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="700" fill="#17263f">version</text>
+<text x="1067" y="370.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="400" fill="#17263f">7</text>
+<text x="1223" y="370.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="400" fill="#17263f">1 (A)</text>
+<text x="1418" y="370.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="400" fill="#17263f">1</text>
+<polyline points="1054,343 1568,343" fill="none" stroke="#dbe2ee" stroke-width="1"/>
+<text x="1067" y="414.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="400" fill="#17263f">12</text>
+<text x="1223" y="414.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="400" fill="#17263f">2 (B)</text>
+<text x="1418" y="414.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="400" fill="#17263f">1</text>
+<polyline points="1054,387 1568,387" fill="none" stroke="#dbe2ee" stroke-width="1"/>
+<text x="1054" y="459.15" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="400" fill="#56657c">여러 사용자가 같은 버킷에 들어갈 수 있음</text>
+<text x="60" y="522.25" font-family="Malgun Gothic, sans-serif" font-size="25" font-weight="700" fill="#17263f">초기 매핑 예시: A는 0~7, B는 8~15 담당 · C는 담당 버킷 없음</text>
+<rect x="60" y="548" width="90" height="82" rx="12" fill="#e7efff" stroke="#e7efff" stroke-width="1"/>
+<text x="86" y="580.1" font-family="Malgun Gothic, sans-serif" font-size="26" font-weight="700" fill="#2563eb">0</text>
+<text x="91" y="614.0" font-family="Malgun Gothic, sans-serif" font-size="20" font-weight="700" fill="#2563eb">A</text>
+<rect x="158" y="548" width="90" height="82" rx="12" fill="#e7efff" stroke="#e7efff" stroke-width="1"/>
+<text x="184" y="580.1" font-family="Malgun Gothic, sans-serif" font-size="26" font-weight="700" fill="#2563eb">1</text>
+<text x="189" y="614.0" font-family="Malgun Gothic, sans-serif" font-size="20" font-weight="700" fill="#2563eb">A</text>
+<rect x="256" y="548" width="90" height="82" rx="12" fill="#e7efff" stroke="#e7efff" stroke-width="1"/>
+<text x="282" y="580.1" font-family="Malgun Gothic, sans-serif" font-size="26" font-weight="700" fill="#2563eb">2</text>
+<text x="287" y="614.0" font-family="Malgun Gothic, sans-serif" font-size="20" font-weight="700" fill="#2563eb">A</text>
+<rect x="354" y="548" width="90" height="82" rx="12" fill="#e7efff" stroke="#e7efff" stroke-width="1"/>
+<text x="380" y="580.1" font-family="Malgun Gothic, sans-serif" font-size="26" font-weight="700" fill="#2563eb">3</text>
+<text x="385" y="614.0" font-family="Malgun Gothic, sans-serif" font-size="20" font-weight="700" fill="#2563eb">A</text>
+<rect x="452" y="548" width="90" height="82" rx="12" fill="#e7efff" stroke="#e7efff" stroke-width="1"/>
+<text x="478" y="580.1" font-family="Malgun Gothic, sans-serif" font-size="26" font-weight="700" fill="#2563eb">4</text>
+<text x="483" y="614.0" font-family="Malgun Gothic, sans-serif" font-size="20" font-weight="700" fill="#2563eb">A</text>
+<rect x="550" y="548" width="90" height="82" rx="12" fill="#e7efff" stroke="#e7efff" stroke-width="1"/>
+<text x="576" y="580.1" font-family="Malgun Gothic, sans-serif" font-size="26" font-weight="700" fill="#2563eb">5</text>
+<text x="581" y="614.0" font-family="Malgun Gothic, sans-serif" font-size="20" font-weight="700" fill="#2563eb">A</text>
+<rect x="648" y="548" width="90" height="82" rx="12" fill="#e7efff" stroke="#e7efff" stroke-width="1"/>
+<text x="674" y="580.1" font-family="Malgun Gothic, sans-serif" font-size="26" font-weight="700" fill="#2563eb">6</text>
+<text x="679" y="614.0" font-family="Malgun Gothic, sans-serif" font-size="20" font-weight="700" fill="#2563eb">A</text>
+<rect x="746" y="548" width="90" height="82" rx="12" fill="#fff0ca" stroke="#fff0ca" stroke-width="1"/>
+<text x="772" y="580.1" font-family="Malgun Gothic, sans-serif" font-size="26" font-weight="700" fill="#a65c00">7</text>
+<text x="777" y="614.0" font-family="Malgun Gothic, sans-serif" font-size="20" font-weight="700" fill="#a65c00">A</text>
+<rect x="844" y="548" width="90" height="82" rx="12" fill="#e1f4ee" stroke="#e1f4ee" stroke-width="1"/>
+<text x="870" y="580.1" font-family="Malgun Gothic, sans-serif" font-size="26" font-weight="700" fill="#087f72">8</text>
+<text x="875" y="614.0" font-family="Malgun Gothic, sans-serif" font-size="20" font-weight="700" fill="#087f72">B</text>
+<rect x="942" y="548" width="90" height="82" rx="12" fill="#e1f4ee" stroke="#e1f4ee" stroke-width="1"/>
+<text x="968" y="580.1" font-family="Malgun Gothic, sans-serif" font-size="26" font-weight="700" fill="#087f72">9</text>
+<text x="973" y="614.0" font-family="Malgun Gothic, sans-serif" font-size="20" font-weight="700" fill="#087f72">B</text>
+<rect x="1040" y="548" width="90" height="82" rx="12" fill="#e1f4ee" stroke="#e1f4ee" stroke-width="1"/>
+<text x="1066" y="580.1" font-family="Malgun Gothic, sans-serif" font-size="26" font-weight="700" fill="#087f72">10</text>
+<text x="1071" y="614.0" font-family="Malgun Gothic, sans-serif" font-size="20" font-weight="700" fill="#087f72">B</text>
+<rect x="1138" y="548" width="90" height="82" rx="12" fill="#e1f4ee" stroke="#e1f4ee" stroke-width="1"/>
+<text x="1164" y="580.1" font-family="Malgun Gothic, sans-serif" font-size="26" font-weight="700" fill="#087f72">11</text>
+<text x="1169" y="614.0" font-family="Malgun Gothic, sans-serif" font-size="20" font-weight="700" fill="#087f72">B</text>
+<rect x="1236" y="548" width="90" height="82" rx="12" fill="#e1f4ee" stroke="#e1f4ee" stroke-width="1"/>
+<text x="1262" y="580.1" font-family="Malgun Gothic, sans-serif" font-size="26" font-weight="700" fill="#087f72">12</text>
+<text x="1267" y="614.0" font-family="Malgun Gothic, sans-serif" font-size="20" font-weight="700" fill="#087f72">B</text>
+<rect x="1334" y="548" width="90" height="82" rx="12" fill="#e1f4ee" stroke="#e1f4ee" stroke-width="1"/>
+<text x="1360" y="580.1" font-family="Malgun Gothic, sans-serif" font-size="26" font-weight="700" fill="#087f72">13</text>
+<text x="1365" y="614.0" font-family="Malgun Gothic, sans-serif" font-size="20" font-weight="700" fill="#087f72">B</text>
+<rect x="1432" y="548" width="90" height="82" rx="12" fill="#e1f4ee" stroke="#e1f4ee" stroke-width="1"/>
+<text x="1458" y="580.1" font-family="Malgun Gothic, sans-serif" font-size="26" font-weight="700" fill="#087f72">14</text>
+<text x="1463" y="614.0" font-family="Malgun Gothic, sans-serif" font-size="20" font-weight="700" fill="#087f72">B</text>
+<rect x="1530" y="548" width="90" height="82" rx="12" fill="#e1f4ee" stroke="#e1f4ee" stroke-width="1"/>
+<text x="1556" y="580.1" font-family="Malgun Gothic, sans-serif" font-size="26" font-weight="700" fill="#087f72">15</text>
+<text x="1561" y="614.0" font-family="Malgun Gothic, sans-serif" font-size="20" font-weight="700" fill="#087f72">B</text>
+<text x="60" y="666.55" font-family="Malgun Gothic, sans-serif" font-size="23" font-weight="400" fill="#56657c">버킷은 논리적 묶음이다. bucket_mapping에는 버킷별 한 행씩, 총 16행을 둔다.</text>
+<rect x="60" y="706" width="760" height="312" rx="18" fill="#ffffff" stroke="#dbe2ee" stroke-width="1"/>
+<rect x="84" y="727" width="250" height="38" rx="19" fill="#e7efff" stroke="#e7efff" stroke-width="1"/>
+<text x="100" y="750.15" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="700" fill="#2563eb">내 PC · 샤드 A의 orders</text>
+<rect x="84" y="785" width="712" height="196" rx="0" fill="#ffffff" stroke="#dbe2ee" stroke-width="1"/>
+<rect x="84" y="785" width="712" height="49" rx="0" fill="#edf2fb" stroke="#edf2fb" stroke-width="1"/>
+<text x="97" y="815.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="700" fill="#17263f">order_id</text>
+<text x="205" y="815.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="700" fill="#17263f">user_id</text>
+<text x="317" y="815.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="700" fill="#17263f">bucket_id</text>
+<text x="442" y="815.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="700" fill="#17263f">amount</text>
+<text x="592" y="815.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="700" fill="#17263f">status</text>
+<rect x="84" y="834" width="712" height="49" rx="0" fill="#fff8e8" stroke="#fff8e8" stroke-width="1"/>
+<text x="97" y="864.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="400" fill="#17263f">O1</text>
+<text x="205" y="864.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="400" fill="#17263f">1001</text>
+<text x="317" y="864.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="400" fill="#17263f">7</text>
+<text x="442" y="864.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="400" fill="#17263f">12000.00</text>
+<text x="592" y="864.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="400" fill="#17263f">CREATED</text>
+<polyline points="84,834 796,834" fill="none" stroke="#dbe2ee" stroke-width="1"/>
+<rect x="84" y="883" width="712" height="49" rx="0" fill="#fff8e8" stroke="#fff8e8" stroke-width="1"/>
+<text x="97" y="913.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="400" fill="#17263f">O2</text>
+<text x="205" y="913.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="400" fill="#17263f">1001</text>
+<text x="317" y="913.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="400" fill="#17263f">7</text>
+<text x="442" y="913.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="400" fill="#17263f">8000.00</text>
+<text x="592" y="913.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="400" fill="#17263f">CONFIRMED</text>
+<polyline points="84,883 796,883" fill="none" stroke="#dbe2ee" stroke-width="1"/>
+<rect x="84" y="932" width="712" height="49" rx="0" fill="#fff8e8" stroke="#fff8e8" stroke-width="1"/>
+<text x="97" y="962.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="400" fill="#17263f">O3</text>
+<text x="205" y="962.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="400" fill="#17263f">2001</text>
+<text x="317" y="962.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="400" fill="#17263f">7</text>
+<text x="442" y="962.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="400" fill="#17263f">5000.00</text>
+<text x="592" y="962.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="400" fill="#17263f">CREATED</text>
+<polyline points="84,932 796,932" fill="none" stroke="#dbe2ee" stroke-width="1"/>
+<text x="84" y="1007.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="400" fill="#56657c">행 하나 = 주문 하나 = 튜플 하나</text>
+<rect x="860" y="706" width="760" height="312" rx="18" fill="#ffffff" stroke="#dbe2ee" stroke-width="1"/>
+<rect x="884" y="727" width="250" height="38" rx="19" fill="#e1f4ee" stroke="#e1f4ee" stroke-width="1"/>
+<text x="900" y="750.15" font-family="Malgun Gothic, sans-serif" font-size="19" font-weight="700" fill="#087f72">내 PC · 샤드 B의 orders</text>
+<rect x="884" y="785" width="712" height="98" rx="0" fill="#ffffff" stroke="#dbe2ee" stroke-width="1"/>
+<rect x="884" y="785" width="712" height="49" rx="0" fill="#edf2fb" stroke="#edf2fb" stroke-width="1"/>
+<text x="897" y="815.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="700" fill="#17263f">order_id</text>
+<text x="1005" y="815.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="700" fill="#17263f">user_id</text>
+<text x="1117" y="815.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="700" fill="#17263f">bucket_id</text>
+<text x="1242" y="815.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="700" fill="#17263f">amount</text>
+<text x="1392" y="815.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="700" fill="#17263f">status</text>
+<text x="897" y="864.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="400" fill="#17263f">O4</text>
+<text x="1005" y="864.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="400" fill="#17263f">1002</text>
+<text x="1117" y="864.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="400" fill="#17263f">12</text>
+<text x="1242" y="864.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="400" fill="#17263f">3000.00</text>
+<text x="1392" y="864.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="400" fill="#17263f">CREATED</text>
+<polyline points="884,834 1596,834" fill="none" stroke="#dbe2ee" stroke-width="1"/>
+<text x="884" y="929.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="400" fill="#56657c">같은 사용자 1001의 O1·O2는 항상 같은 버킷이다.</text>
+<text x="884" y="964.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="400" fill="#56657c">다른 사용자 2001의 O3도 같은 버킷 7에 들어갈 수 있다.</text>
+<rect x="60" y="1045" width="1560" height="88" rx="18" fill="#f0eafa" stroke="#e4d8f5" stroke-width="1"/>
+<text x="84" y="1087.1" font-family="Malgun Gothic, sans-serif" font-size="26" font-weight="700" fill="#7946c9">학교 PC · 샤드 C의 orders</text>
+<text x="650" y="1090.4" font-family="Malgun Gothic, sans-serif" font-size="24" font-weight="400" fill="#17263f">초기에는 빈 테이블 · A·B와 동일한 컬럼 구조</text>
+<text x="60" y="1195.8" font-family="Malgun Gothic, sans-serif" font-size="28" font-weight="700" fill="#17263f">버킷 7을 A → C로 옮기고, 검증·전환·이전본 정리가 끝나면</text>
+<rect x="60" y="1225" width="470" height="198" rx="18" fill="#fff8e8" stroke="#f4dfb7" stroke-width="1"/>
+<text x="84" y="1267.25" font-family="Malgun Gothic, sans-serif" font-size="25" font-weight="700" fill="#a65c00">매핑의 한 행이 변경</text>
+<text x="84" y="1309.7" font-family="Malgun Gothic, sans-serif" font-size="22" font-weight="400" fill="#17263f">이전: (bucket=7, shard=A, version=1)</text>
+<text x="84" y="1348.7" font-family="Malgun Gothic, sans-serif" font-size="22" font-weight="400" fill="#17263f">이후: (bucket=7, shard=C, version=2)</text>
+<text x="84" y="1399.85" font-family="Malgun Gothic, sans-serif" font-size="21" font-weight="400" fill="#56657c">user_id와 bucket_id는 그대로 유지</text>
+<polyline points="544,1320 591,1320" fill="none" stroke="#7946c9" stroke-width="3"/>
+<polygon points="591,1320 579.2941876694152,1325.654551943446 579.2941876694152,1314.345448056554" fill="#7946c9"/>
+<rect x="605" y="1225" width="1015" height="198" rx="18" fill="#ffffff" stroke="#dbe2ee" stroke-width="1"/>
+<rect x="629" y="1246" width="967" height="106" rx="0" fill="#ffffff" stroke="#dbe2ee" stroke-width="1"/>
+<rect x="629" y="1246" width="967" height="53" rx="0" fill="#edf2fb" stroke="#edf2fb" stroke-width="1"/>
+<text x="642" y="1279.4" font-family="Malgun Gothic, sans-serif" font-size="24" font-weight="700" fill="#17263f">샤드 A</text>
+<text x="902" y="1279.4" font-family="Malgun Gothic, sans-serif" font-size="24" font-weight="700" fill="#17263f">샤드 B</text>
+<text x="1232" y="1279.4" font-family="Malgun Gothic, sans-serif" font-size="24" font-weight="700" fill="#17263f">샤드 C</text>
+<text x="642" y="1332.4" font-family="Malgun Gothic, sans-serif" font-size="24" font-weight="400" fill="#17263f">예시 주문 없음</text>
+<text x="902" y="1332.4" font-family="Malgun Gothic, sans-serif" font-size="24" font-weight="400" fill="#17263f">O4 유지</text>
+<text x="1232" y="1332.4" font-family="Malgun Gothic, sans-serif" font-size="24" font-weight="400" fill="#17263f">O1 · O2 · O3 저장</text>
+<polyline points="629,1299 1596,1299" fill="none" stroke="#dbe2ee" stroke-width="1"/>
+<text x="629" y="1394.4" font-family="Malgun Gothic, sans-serif" font-size="24" font-weight="700" fill="#7946c9">사용자 한 명이 아니라 버킷 7에 속한 모든 주문을 이동한다.</text>
+<text x="60" y="1482.7" font-family="Malgun Gothic, sans-serif" font-size="22" font-weight="400" fill="#56657c">O1~O4는 UUID를 줄여 부르는 별칭이다. 표에서는 created_at·updated_at 컬럼을 생략했다.</text>
+<text x="60" y="1518.7" font-family="Malgun Gothic, sans-serif" font-size="22" font-weight="400" fill="#56657c">상태명·해시 결과는 설명용 예시다. 버킷마다 orders 테이블을 새로 만드는 구조가 아니다.</text>
+</svg>
