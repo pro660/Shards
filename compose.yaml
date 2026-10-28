@@ -1,0 +1,27 @@
+# Docker name
+name: shards-study
+
+# Excution programs
+services:
+  # Metadata Service name
+  meta-db:
+    # Postgres Docker IMG
+    image: postgres:18
+
+    # Deliver .env file to Postgres18
+    environment:
+      POSTGRES_DB: ${META_DB_NAME:?META_DB_NAME is required}
+      POSTGRES_USER: ${META_DB_USER:?META_DB_USER is required}
+      POSTGRES_PASSWORD: ${META_DB_PASSWORD:?META_DB_PASSWORD is required}
+
+    #Private Port
+    ports:
+      - "127.0.0.1:15432:5432"
+
+    # DB data is stored separate storage distinct from container(Volumes)
+    volumes:
+      - meta_data:/var/lib/postgresql
+
+# Declare the storage
+volumes:
+  meta_data:
