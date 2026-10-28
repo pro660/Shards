@@ -22,6 +22,22 @@ services:
     volumes:
       - meta_data:/var/lib/postgresql
 
+  # Shard_A(Order data)
+  shard-a:
+    # Postgres Docker IMG
+    image: postgres:18
+
+    environment:
+      POSTGRES_DB: ${SHARD_A_DB_NAME:?SHARD_A_DB_NAME is required}
+      POSTGRES_USER: ${SHARD_A_DB_USER:?SHARD_A_DB_USER is required}
+      POSTGRES_PASSWORD: ${SHARD_A_DB_PASSWORD:?SHARD_A_DB_PASSWORD is required}
+
+    ports:
+      - "127.0.0.1:15433:5432"
+
+    volumes:
+      - shard_a_data:/var/lib/postgresql
 # Declare the storage
 volumes:
   meta_data:
+  shard_a_data:
