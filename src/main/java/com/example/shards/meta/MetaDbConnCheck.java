@@ -34,6 +34,6 @@ public class MetaDbConnCheck implements ApplicationRunner {
         );
 
         // SQL 실행에 성공한 경우에만 이 로그가 출력됩니다.
-        log.info("메타 DB 연결 확인 완료: {}", databaseName);
+        log.info("Meta DB Connection Successful: {}", databaseName);
     }
 }
