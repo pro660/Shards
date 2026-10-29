@@ -1,4 +1,4 @@
-package com.example.shards;
+package com.example.shards.sharding;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -52,5 +52,22 @@ public final class BucketHasher {
                     e
             );
         }
+    }
+    @Test
+    void rejectsNegativeUserId() {
+        // 일반적인 음수 사용자 ID를 거부하는지 확인합니다.
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> BucketHasher.toBucketId(-1L)
+        );
+    }
+
+    @Test
+    void rejectsSmallestLongUserId() {
+        // long이 표현할 수 있는 가장 작은 값도 거부해야 합니다.
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> BucketHasher.toBucketId(Long.MIN_VALUE)
+        );
     }
 }
