@@ -21,6 +21,12 @@ repositories {
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-webmvc'
 
+    // JDBC feature set
+    implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+
+    // DB Driver set
+    runtimeOnly 'org.postgresql:postgresql'
+
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
