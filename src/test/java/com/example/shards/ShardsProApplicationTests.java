@@ -19,7 +19,7 @@ class ShardsProApplicationTests {
     private int port;
 
     @Test
-    void healthRespondsSuccessfully() throws Exception { {
+    void healthRespondsSuccessfully() throws Exception {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create("http://localhost:" + port + "/health"))
                 .timeout(Duration.ofSeconds(5))
