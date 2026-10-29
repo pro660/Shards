@@ -1,4 +1,4 @@
-package com.example.shards.sharding;
+package com.example.shards;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
