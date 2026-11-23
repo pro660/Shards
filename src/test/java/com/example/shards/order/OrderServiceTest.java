@@ -102,7 +102,7 @@ class OrderServiceTest {
     })
     void rejectsInvalidAmount(String input) {
         assertThrows(
-                IllegalArgumentException.class,
+                InvalidOrderRequestException.class,
                 () -> service.create(101L, new BigDecimal(input))
         );
 
@@ -114,7 +114,7 @@ class OrderServiceTest {
     @ValueSource(longs = {0L, -1L, Long.MIN_VALUE})
     void rejectsInvalidUserId(long userId) {
         assertThrows(
-                IllegalArgumentException.class,
+                InvalidOrderRequestException.class,
                 () -> service.create(userId, BigDecimal.TEN)
         );
 
@@ -124,7 +124,7 @@ class OrderServiceTest {
     @Test
     void rejectsMissingAmount() {
         assertThrows(
-                IllegalArgumentException.class,
+                InvalidOrderRequestException.class,
                 () -> service.create(101L, null)
         );
 
