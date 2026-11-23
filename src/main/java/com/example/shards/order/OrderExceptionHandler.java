@@ -1,0 +1,44 @@
+package com.example.shards.order;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+// 주문 Controller에서 발생한 예외를 HTTP 오류 응답으로 바꿉니다.
+@RestControllerAdvice(assignableTypes = OrderController.class)
+public class OrderExceptionHandler {
+
+    // 서비스가 판단한 주문 입력 오류를 처리합니다.
+    @ExceptionHandler(InvalidOrderRequestException.class)
+    public ProblemDetail handleInvalidOrderRequest(
+            InvalidOrderRequestException exception
+    ) {
+        // 상태 코드와 사용자에게 보여줄 오류 설명을 담습니다.
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST,
+                exception.getMessage()
+        );
+
+        problem.setTitle("Invalid order request");
+
+        return problem;
+    }
+
+    // JSON 문법이 틀리거나 값을 요청 객체로 변환하지 못하면 처리합니다.
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ProblemDetail handleUnreadableRequest(
+            HttpMessageNotReadableException exception
+    ) {
+        // 내부 변환 오류 대신 이해하기 쉬운 안내를 반환합니다.
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST,
+                "요청 JSON의 형식과 사용자 번호·금액의 자료형을 확인해 주세요."
+        );
+
+        problem.setTitle("Invalid request body");
+
+        return problem;
+    }
+}

@@ -31,19 +31,19 @@ public class OrderService {
 
         // 잘못된 입력은 DB 조회 전에 거부합니다.
         if (userId <= 0) {
-            throw new IllegalArgumentException(
+            throw new InvalidOrderRequestException(
                     "userId는 1 이상이어야 합니다."
             );
         }
 
         if (amount == null) {
-            throw new IllegalArgumentException(
+            throw new InvalidOrderRequestException(
                     "주문 금액은 필수입니다."
             );
         }
 
         if (amount.signum() < 0 || amount.compareTo(MAX_AMOUNT) > 0) {
-            throw new IllegalArgumentException(
+            throw new InvalidOrderRequestException(
                     "주문 금액은 0 이상 9999999999.99 이하여야 합니다."
             );
         }
@@ -55,7 +55,7 @@ public class OrderService {
             normalizedAmount = amount.setScale(2, RoundingMode.UNNECESSARY);
         } catch (ArithmeticException e) {
             // 반올림이 필요한 금액은 그대로 거부합니다.
-            throw new IllegalArgumentException(
+            throw new InvalidOrderRequestException(
                     "주문 금액은 소수 둘째 자리까지 표현할 수 있어야 합니다.",
                     e
             );
