@@ -1,7 +1,9 @@
 package com.example.shards.meta;
 
 import java.util.List;
+import java.util.Optional;
 
+import org.springframework.dao.support.DataAccessUtils;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
@@ -62,5 +64,13 @@ public class BucketMappingRepository {
     public List<BucketMapping> findAll() {
         // 집계 한 번에 사용할 전체 버킷 매핑을 한 쿼리로 읽습니다.
         return jdbcTemplate.query(SELECT_MAPPINGS + "ORDER BY b.bucket_id", BUCKET_MAPPING_ROW_MAPPER);
+    }
+
+    public Optional<BucketMapping> findByBucketIdForShare(int bucketId) {
+        // 작업 등록이 끝날 때까지 매핑과 출발 샤드 상태가 바뀌지 않도록 잠급니다.
+        return DataAccessUtils.optionalResult(jdbcTemplate.query(
+                SELECT_MAPPINGS + "WHERE b.bucket_id = ? FOR SHARE OF b, s",
+                BUCKET_MAPPING_ROW_MAPPER, bucketId
+        ));
     }
 }

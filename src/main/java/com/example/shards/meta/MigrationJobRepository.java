@@ -44,16 +44,19 @@ public class MigrationJobRepository {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    public MigrationJob insert(int bucketId, int sourceShardId, int targetShardId, long sourceMappingVersion) {
-        // DB가 생성한 작업 번호, 기본 단계와 시각을 저장 직후 함께 받습니다.
+    public Optional<MigrationJob> tryInsert(
+            int bucketId, int sourceShardId, int targetShardId, long sourceMappingVersion
+    ) {
+        // 미완료 작업의 인덱스와 충돌하면 RETURNING 결과가 비어 있습니다.
         String sql = """
                 INSERT INTO public.migration_jobs (bucket_id, source_shard_id, target_shard_id, source_mapping_version)
                 VALUES (?, ?, ?, ?)
+                ON CONFLICT ((1)) WHERE finished_at IS NULL DO NOTHING
                 RETURNING
                 """ + JOB_COLUMNS;
-        return jdbcTemplate.queryForObject(
+        return DataAccessUtils.optionalResult(jdbcTemplate.query(
                 sql, MIGRATION_JOB_ROW_MAPPER, bucketId, sourceShardId, targetShardId, sourceMappingVersion
-        );
+        ));
     }
 
     public Optional<MigrationJob> findById(long jobId) {

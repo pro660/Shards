@@ -36,9 +36,9 @@ class MigrationJobRepositoryIntegrationTest {
         targetShardId = jdbcTemplate.queryForObject(
                 "SELECT shard_id FROM public.shards WHERE connection_key = 'shardC'", Integer.class
         );
-        testJob = migrationJobRepository.insert(
+        testJob = migrationJobRepository.tryInsert(
                 mapping.bucketId(), mapping.shardId(), targetShardId, mapping.version()
-        );
+        ).orElseThrow();
     }
 
     @Test
