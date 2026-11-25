@@ -9,6 +9,7 @@ import java.util.Optional;
 import org.springframework.dao.support.DataAccessUtils;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -141,7 +142,10 @@ public class OrderRepository {
         return namedJdbcTemplate.queryForObject(sql, Map.of("bucketIds", bucketIds), Long.class);
     }
 
-    public List<Order> findRecentByBucketIds(JdbcTemplate shardJdbcTemplate, List<Integer> bucketIds, int limit) {
+    public List<Order> findRecentByBucketIds(
+            JdbcTemplate shardJdbcTemplate, List<Integer> bucketIds, int limit,
+            OffsetDateTime beforeCreatedAt, UUID beforeOrderId
+    ) {
         if (bucketIds.isEmpty()) {
             return List.of();
         }
@@ -151,11 +155,21 @@ public class OrderRepository {
                 SELECT order_id, user_id, bucket_id, amount, status, created_at, updated_at
                 FROM orders
                 WHERE bucket_id IN (:bucketIds)
+                """;
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("bucketIds", bucketIds)
+                .addValue("limit", limit);
+        if (beforeCreatedAt != null) {
+            // 같은 시각에는 UUID가 더 작은 주문부터 이어서 읽습니다.
+            sql += " AND (created_at, order_id) < (:beforeCreatedAt, :beforeOrderId)\n";
+            params.addValue("beforeCreatedAt", beforeCreatedAt).addValue("beforeOrderId", beforeOrderId);
+        }
+        sql += """
                 ORDER BY created_at DESC, order_id DESC
                 LIMIT :limit
                 """;
         NamedParameterJdbcTemplate namedJdbcTemplate = new NamedParameterJdbcTemplate(shardJdbcTemplate);
-        return namedJdbcTemplate.query(sql, Map.of("bucketIds", bucketIds, "limit", limit), ORDER_ROW_MAPPER);
+        return namedJdbcTemplate.query(sql, params, ORDER_ROW_MAPPER);
     }
 
     public Optional<Order> updateAmount(

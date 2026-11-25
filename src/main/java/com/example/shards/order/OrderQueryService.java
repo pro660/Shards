@@ -1,10 +1,12 @@
 package com.example.shards.order;
 
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import com.example.shards.meta.BucketMapping;
 import com.example.shards.meta.BucketMappingRepository;
@@ -15,7 +17,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class OrderQueryService {
 
-    private static final int RECENT_ORDER_LIMIT = 50;
+    private static final int MAX_PAGE_SIZE = 50;
 
     // SQL과 같은 순서로 비교합니다. UUID는 표준 문자열 순서가 PostgreSQL의 바이트 순서와 같습니다.
     private static final Comparator<Order> NEWEST_FIRST = Comparator
@@ -49,20 +51,27 @@ public class OrderQueryService {
         return totalCount;
     }
 
-    public List<Order> findRecentOrders() {
+    public List<Order> findRecentOrders(int size, OffsetDateTime beforeCreatedAt, UUID beforeOrderId) {
+        if (size < 1 || size > MAX_PAGE_SIZE) {
+            throw new InvalidOrderRequestException("size는 1부터 " + MAX_PAGE_SIZE + "까지 입력해 주세요.");
+        }
+        if ((beforeCreatedAt == null) != (beforeOrderId == null)) {
+            throw new InvalidOrderRequestException("다음 페이지에는 beforeCreatedAt과 beforeOrderId가 모두 필요합니다.");
+        }
+
         List<Order> candidates = new ArrayList<>();
         for (var shard : findOwnedBucketsByShard().entrySet()) {
-            // 한 샤드에서 50위보다 뒤인 주문은 전체 상위 50건에도 들어갈 수 없습니다.
+            // 모든 샤드가 같은 주문 다음부터 읽으므로 샤드마다 한 페이지 분량이면 충분합니다.
             candidates.addAll(orderRepository.findRecentByBucketIds(
                     shardConnectionRegistry.getJdbcTemplate(shard.getKey()),
                     shard.getValue(),
-                    RECENT_ORDER_LIMIT
+                    size, beforeCreatedAt, beforeOrderId
             ));
         }
 
         return candidates.stream()
                 .sorted(NEWEST_FIRST)
-                .limit(RECENT_ORDER_LIMIT)
+                .limit(size)
                 .toList();
     }
 

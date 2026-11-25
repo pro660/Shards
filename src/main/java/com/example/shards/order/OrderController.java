@@ -1,7 +1,9 @@
 package com.example.shards.order;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -70,8 +72,13 @@ public class OrderController {
     }
 
     @GetMapping("/all")
-    public ResponseEntity<List<Order>> findRecentOrders() {
-        return ResponseEntity.ok(orderQueryService.findRecentOrders());
+    public ResponseEntity<List<Order>> findRecentOrders(
+            @RequestParam(name = "size", defaultValue = "50") int size,
+            @RequestParam(name = "beforeCreatedAt", required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime beforeCreatedAt,
+            @RequestParam(name = "beforeOrderId", required = false) UUID beforeOrderId
+    ) {
+        return ResponseEntity.ok(orderQueryService.findRecentOrders(size, beforeCreatedAt, beforeOrderId));
     }
 
     @PatchMapping("/{orderId}/amount")
