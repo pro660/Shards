@@ -6,6 +6,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -14,7 +15,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -156,18 +156,38 @@ class OrderCrudIntegrationTest {
         }
     }
 
-    @ParameterizedTest(name = "total count increases for user {0}")
-    @ValueSource(longs = {1L, 101L})
-    void countsOrdersAcrossBothShards(long userId) throws IOException, InterruptedException {
+    @ParameterizedTest(name = "count includes user {0} only on {2}, excludes copy on {3}")
+    @CsvSource({
+            "1, 3, shardA, shardB",
+            "101, 10, shardB, shardA"
+    })
+    void countsOnlyOrdersOnTheirOwningShard(long userId, int bucketId, String owner, String otherShard)
+            throws IOException, InterruptedException {
         try (HttpClient client = newClient()) {
-            // 기존 주문이 남아 있어도 실제 A·B의 합계를 기준으로 검사합니다.
-            long baseline = countAllRows("shardA") + countAllRows("shardB");
+            // 초기 매핑의 버킷 범위로 SQL을 직접 실행해 기준값을 구합니다.
+            long baseline = countRowsInRange("shardA", 0, 7) + countRowsInRange("shardB", 8, 15);
             assertThat(readTotalCount(client)).isEqualTo(baseline);
 
-            createTestOrder(client, userId);
+            JsonNode original = createTestOrder(client, userId);
             assertThat(readTotalCount(client)).isEqualTo(baseline + 1);
 
+            // 같은 주문을 다른 DB에 넣어 버킷 이동 중 두 행이 공존하는 상황을 만듭니다.
+            shardConnectionRegistry.getJdbcTemplate(otherShard).update("""
+                    INSERT INTO orders (order_id, user_id, bucket_id, amount, status, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    testOrderId, userId, bucketId, original.required("amount").decimalValue(),
+                    original.required("status").stringValue(),
+                    OffsetDateTime.parse(original.required("createdAt").stringValue()),
+                    OffsetDateTime.parse(original.required("updatedAt").stringValue())
+            );
+            assertThat(countTestOrder(owner)).isEqualTo(1);
+            assertThat(countTestOrder(otherShard)).isEqualTo(1);
+            assertThat(readTotalCount(client)).isEqualTo(baseline + 1);
+
+            // 원본을 삭제한 뒤에는 복사본이 남아 있어도 합계에서 빠져야 합니다.
             send(client, "DELETE", "/orders/" + testOrderId + "?userId=" + userId, null, 204);
+            assertThat(countTestOrder(otherShard)).isEqualTo(1);
             assertThat(readTotalCount(client)).isEqualTo(baseline);
         }
     }
@@ -204,9 +224,9 @@ class OrderCrudIntegrationTest {
         );
     }
 
-    private long countAllRows(String shard) {
+    private long countRowsInRange(String shard, int firstBucket, int lastBucket) {
         return shardConnectionRegistry.getJdbcTemplate(shard).queryForObject(
-                "SELECT COUNT(*) FROM orders", Long.class
+                "SELECT COUNT(*) FROM orders WHERE bucket_id BETWEEN ? AND ?", Long.class, firstBucket, lastBucket
         );
     }
 
