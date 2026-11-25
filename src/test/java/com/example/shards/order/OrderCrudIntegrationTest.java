@@ -2,9 +2,11 @@ package com.example.shards.order;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -16,6 +18,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -223,6 +226,53 @@ class OrderCrudIntegrationTest {
                         "DELETE FROM orders WHERE order_id IN (?, ?, ?, ?)", newestId, higherId, lowerId, copyOnlyId
                 );
             }
+        }
+    }
+
+    @Test
+    void continuesFromLastOrderAcrossShards() throws IOException, InterruptedException {
+        OffsetDateTime tiedAt = OffsetDateTime.now(ZoneOffset.UTC).plusDays(1);
+        UUID firstId = UUID.randomUUID();
+        UUID higherId = new UUID(Long.MIN_VALUE, UUID.randomUUID().getLeastSignificantBits());
+        UUID lowerId = new UUID(Long.MAX_VALUE, UUID.randomUUID().getLeastSignificantBits());
+        UUID insertedLater = UUID.randomUUID();
+
+        try (HttpClient client = newClient()) {
+            insertOrderFixture("shardA", firstId, 1L, 3, tiedAt.plusSeconds(1));
+            insertOrderFixture("shardB", higherId, 101L, 10, tiedAt);
+            insertOrderFixture("shardA", lowerId, 1L, 3, tiedAt);
+            insertOrderFixture("shardB", lowerId, 1L, 3, tiedAt);
+
+            JsonNode firstPage = jsonMapper.readTree(send(client, "GET", "/orders/all?size=2", null, 200));
+            assertThat(firstPage.size()).isEqualTo(2);
+            assertThat(firstPage.get(0).required("orderId").stringValue()).isEqualTo(firstId.toString());
+            JsonNode lastOrder = firstPage.get(1);
+            assertThat(lastOrder.required("orderId").stringValue()).isEqualTo(higherId.toString());
+
+            // 페이지 사이에 최신 주문이 들어와도 다음 결과는 직전에 본 주문 바로 뒤에서 시작합니다.
+            insertOrderFixture("shardB", insertedLater, 101L, 10, tiedAt.plusSeconds(2));
+            String cursorTime = URLEncoder.encode(lastOrder.required("createdAt").stringValue(), StandardCharsets.UTF_8);
+            String path = "/orders/all?size=1&beforeCreatedAt=" + cursorTime
+                    + "&beforeOrderId=" + lastOrder.required("orderId").stringValue();
+            JsonNode nextPage = jsonMapper.readTree(send(client, "GET", path, null, 200));
+            assertThat(nextPage.size()).isOne();
+            assertThat(nextPage.get(0).required("orderId").stringValue()).isEqualTo(lowerId.toString());
+        } finally {
+            for (String shard : List.of("shardA", "shardB")) {
+                shardConnectionRegistry.getJdbcTemplate(shard).update(
+                        "DELETE FROM orders WHERE order_id IN (?, ?, ?, ?)", firstId, higherId, lowerId, insertedLater
+                );
+            }
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"size=0", "size=51", "beforeCreatedAt=2026-01-01T00:00:00Z",
+            "beforeOrderId=00000000-0000-0000-0000-000000000001"})
+    void rejectsInvalidPageParameters(String query) throws IOException, InterruptedException {
+        try (HttpClient client = newClient()) {
+            assertProblem(client, "GET", "/orders/all?" + query, null, 400, "Invalid order request",
+                    query.startsWith("size") ? "size" : "beforeCreatedAt과 beforeOrderId");
         }
     }
 
