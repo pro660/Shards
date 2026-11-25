@@ -3,13 +3,27 @@ package com.example.shards.order;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.UUID;
-
+import java.util.Optional;
+import org.springframework.dao.support.DataAccessUtils;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 // 전달받은 샤드 연결로 주문 데이터를 저장합니다.
 @Repository
 public class OrderRepository {
+
+    // 저장 결과와 조회 결과를 같은 방식으로 Order 객체로 바꿉니다.
+    private static final RowMapper<Order> ORDER_ROW_MAPPER =
+            (rs, rowNum) -> new Order(
+                    rs.getObject("order_id", UUID.class),
+                    rs.getLong("user_id"),
+                    rs.getInt("bucket_id"),
+                    rs.getBigDecimal("amount"),
+                    rs.getString("status"),
+                    rs.getObject("created_at", OffsetDateTime.class),
+                    rs.getObject("updated_at", OffsetDateTime.class)
+            );
 
     public Order insert(
             JdbcTemplate shardJdbcTemplate,
@@ -41,19 +55,45 @@ public class OrderRepository {
         // INSERT 결과로 반환된 한 행을 Order 객체로 바꿉니다.
         return shardJdbcTemplate.queryForObject(
                 sql,
-                (rs, rowNum) -> new Order(
-                        rs.getObject("order_id", UUID.class),
-                        rs.getLong("user_id"),
-                        rs.getInt("bucket_id"),
-                        rs.getBigDecimal("amount"),
-                        rs.getString("status"),
-                        rs.getObject("created_at", OffsetDateTime.class),
-                        rs.getObject("updated_at", OffsetDateTime.class)
-                ),
+                ORDER_ROW_MAPPER,
                 orderId,
                 userId,
                 bucketId,
                 amount
+        );
+    }
+
+    public Optional<Order> findById(
+            JdbcTemplate shardJdbcTemplate,
+            UUID orderId,
+            long userId,
+            int bucketId
+    ) {
+        // 이미 선택된 샤드에서 사용자와 버킷이 모두 일치하는 주문을 찾습니다.
+        String sql = """
+            SELECT
+                order_id,
+                user_id,
+                bucket_id,
+                amount,
+                status,
+                created_at,
+                updated_at
+            FROM orders
+            WHERE order_id = ?
+              AND user_id = ?
+              AND bucket_id = ?
+            """;
+
+        // 일치하는 행이 없으면 빈 Optional을 돌려줍니다.
+        return DataAccessUtils.optionalResult(
+                shardJdbcTemplate.query(
+                        sql,
+                        ORDER_ROW_MAPPER,
+                        orderId,
+                        userId,
+                        bucketId
+                )
         );
     }
 }
