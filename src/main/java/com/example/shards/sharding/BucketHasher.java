@@ -9,7 +9,7 @@ import java.security.NoSuchAlgorithmException;
 public final class BucketHasher {
 
     // 샤드 개수와 관계없이 버킷은 16개로 고정합니다.
-    private static final int BUCKET_COUNT = 16;
+    public static final int BUCKET_COUNT = 16;
 
     // 계산 기능만 사용하므로 객체를 직접 만들지 못하게 합니다.
     private BucketHasher() {

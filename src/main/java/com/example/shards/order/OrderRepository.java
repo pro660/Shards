@@ -3,11 +3,13 @@ package com.example.shards.order;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.Optional;
 import org.springframework.dao.support.DataAccessUtils;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 // 전달받은 샤드 연결로 주문 데이터를 저장합니다.
@@ -128,9 +130,15 @@ public class OrderRepository {
         );
     }
 
-    public long countAll(JdbcTemplate shardJdbcTemplate) {
-        // 주문 행을 가져오지 않고 DB에 집계 결과 한 건만 요청합니다.
-        return shardJdbcTemplate.queryForObject("SELECT COUNT(*) FROM orders", Long.class);
+    public long countByBucketIds(JdbcTemplate shardJdbcTemplate, List<Integer> bucketIds) {
+        if (bucketIds.isEmpty()) {
+            return 0;
+        }
+
+        // 샤드가 소유한 버킷의 주문만 세도록 번호 목록을 SQL에 전달합니다.
+        String sql = "SELECT COUNT(*) FROM orders WHERE bucket_id IN (:bucketIds)";
+        NamedParameterJdbcTemplate namedJdbcTemplate = new NamedParameterJdbcTemplate(shardJdbcTemplate);
+        return namedJdbcTemplate.queryForObject(sql, Map.of("bucketIds", bucketIds), Long.class);
     }
 
     public Optional<Order> updateAmount(
