@@ -14,6 +14,7 @@ import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -35,6 +36,34 @@ class OrderRepositoryIntegrationTest {
     @Test
     void insertsOrderIntoShardBAndRollsBack() {
         verifyInsertAndRollback("shardB", "shards_b", 101L, 10);
+    }
+
+    @Test
+    void deletesOnlyOrderMatchingUserAndBucket() {
+        JdbcTemplate shardA = shardConnectionRegistry.getJdbcTemplate("shardA");
+        DataSource dataSource = Objects.requireNonNull(shardA.getDataSource());
+        TransactionTemplate transaction = new TransactionTemplate(
+                new DataSourceTransactionManager(dataSource)
+        );
+        UUID orderId = UUID.randomUUID();
+        long ownerId = 1L;
+        long otherUserInBucket = 25L;
+        int bucketId = 3;
+        String countSql = "SELECT COUNT(*) FROM orders WHERE order_id = ?";
+
+        transaction.executeWithoutResult(status -> {
+            status.setRollbackOnly();
+            orderRepository.insert(shardA, orderId, ownerId, bucketId, new BigDecimal("15000.00"));
+
+            // 같은 버킷의 다른 사용자나 다른 버킷으로는 삭제할 수 없습니다.
+            assertFalse(orderRepository.deleteById(shardA, orderId, otherUserInBucket, bucketId));
+            assertFalse(orderRepository.deleteById(shardA, orderId, ownerId, bucketId + 1));
+            assertEquals(1L, shardA.queryForObject(countSql, Long.class, orderId).longValue());
+
+            assertTrue(orderRepository.deleteById(shardA, orderId, ownerId, bucketId));
+            assertEquals(0L, shardA.queryForObject(countSql, Long.class, orderId).longValue());
+            assertFalse(orderRepository.deleteById(shardA, orderId, ownerId, bucketId));
+        });
     }
 
     // 같은 검사를 A와 B에서 각각 실행합니다.
