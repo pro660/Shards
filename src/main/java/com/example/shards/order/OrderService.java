@@ -122,6 +122,18 @@ public class OrderService {
         throw new OrderStatusConflictException(currentOrder.status(), requestedStatus);
     }
 
+    public void deleteById(long userId, UUID orderId) {
+        validateUserId(userId);
+        ShardRoute route = shardRouter.route(userId);
+
+        boolean deleted = orderRepository.deleteById(
+                route.jdbcTemplate(), orderId, userId, route.mapping().bucketId()
+        );
+        if (!deleted) {
+            throw new OrderNotFoundException();
+        }
+    }
+
     private static void validateUserId(long userId) {
         if (userId <= 0) {
             throw new InvalidOrderRequestException(
