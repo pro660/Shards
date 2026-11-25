@@ -113,6 +113,14 @@ public class MigrationJobRepository {
                 """, job.jobId()));
     }
 
+    public void cancelPending(MigrationJob job) {
+        requireUpdated(jdbcTemplate.update("""
+                UPDATE public.migration_jobs
+                SET phase = 'CANCELLED', finished_at = statement_timestamp(), updated_at = statement_timestamp()
+                WHERE job_id = ? AND phase = 'PENDING'
+                """, job.jobId()));
+    }
+
     public void touchCleaning(MigrationJob job) {
         requireUpdated(jdbcTemplate.update("""
                 UPDATE public.migration_jobs SET last_error = NULL, updated_at = statement_timestamp()

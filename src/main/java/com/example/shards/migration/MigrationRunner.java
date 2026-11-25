@@ -74,6 +74,20 @@ public class MigrationRunner {
         return jobs.findById(jobId).orElseThrow(MigrationJobNotFoundException::new);
     }
 
+    @Transactional
+    public MigrationJob cancelPending(long jobId) {
+        locks.allowChanges();
+        MigrationJob job = jobs.findByIdForUpdate(jobId).orElseThrow(MigrationJobNotFoundException::new);
+        if ("CANCELLED".equals(job.phase())) {
+            return job;
+        }
+        if (!"PENDING".equals(job.phase())) {
+            throw new IllegalStateException("복사를 시작하기 전의 작업만 취소할 수 있습니다.");
+        }
+        jobs.cancelPending(job);
+        return jobs.findById(jobId).orElseThrow(MigrationJobNotFoundException::new);
+    }
+
     private void beginCopy(MigrationJob job, JdbcTemplate target) {
         locks.drainWrites(job.bucketId());
         // 쓰기 제한을 적용하기 전에 목적지의 주문 테이블을 읽을 수 있는지 확인합니다.
@@ -136,7 +150,11 @@ public class MigrationRunner {
     private JdbcTemplate activeShard(int shardId) {
         String key = shards.findActiveConnectionKeyForShare(shardId)
                 .orElseThrow(() -> new IllegalStateException("재배치에 필요한 샤드가 ACTIVE 상태여야 합니다."));
-        return connections.getJdbcTemplate(key);
+        try {
+            return connections.getJdbcTemplate(key);
+        } catch (IllegalArgumentException exception) {
+            throw new IllegalStateException("재배치에 필요한 샤드 연결 설정이 없습니다.", exception);
+        }
     }
 
     private static void checkMapping(BucketMapping mapping, int owner, long version, String state) {
