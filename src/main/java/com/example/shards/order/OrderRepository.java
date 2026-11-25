@@ -128,6 +128,11 @@ public class OrderRepository {
         );
     }
 
+    public long countAll(JdbcTemplate shardJdbcTemplate) {
+        // 주문 행을 가져오지 않고 DB에 집계 결과 한 건만 요청합니다.
+        return shardJdbcTemplate.queryForObject("SELECT COUNT(*) FROM orders", Long.class);
+    }
+
     public Optional<Order> updateAmount(
             JdbcTemplate shardJdbcTemplate,
             UUID orderId,

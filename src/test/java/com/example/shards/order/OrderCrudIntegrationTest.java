@@ -14,6 +14,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -155,6 +156,22 @@ class OrderCrudIntegrationTest {
         }
     }
 
+    @ParameterizedTest(name = "total count increases for user {0}")
+    @ValueSource(longs = {1L, 101L})
+    void countsOrdersAcrossBothShards(long userId) throws IOException, InterruptedException {
+        try (HttpClient client = newClient()) {
+            // 기존 주문이 남아 있어도 실제 A·B의 합계를 기준으로 검사합니다.
+            long baseline = countAllRows("shardA") + countAllRows("shardB");
+            assertThat(readTotalCount(client)).isEqualTo(baseline);
+
+            createTestOrder(client, userId);
+            assertThat(readTotalCount(client)).isEqualTo(baseline + 1);
+
+            send(client, "DELETE", "/orders/" + testOrderId + "?userId=" + userId, null, 204);
+            assertThat(readTotalCount(client)).isEqualTo(baseline);
+        }
+    }
+
     @AfterEach
     void removeTestOrderIfPresent() {
         if (testOrderId == null) {
@@ -185,6 +202,17 @@ class OrderCrudIntegrationTest {
         return shardConnectionRegistry.getJdbcTemplate(shard).queryForObject(
                 "SELECT COUNT(*) FROM orders WHERE order_id = ?", Long.class, testOrderId
         );
+    }
+
+    private long countAllRows(String shard) {
+        return shardConnectionRegistry.getJdbcTemplate(shard).queryForObject(
+                "SELECT COUNT(*) FROM orders", Long.class
+        );
+    }
+
+    private long readTotalCount(HttpClient client) throws IOException, InterruptedException {
+        JsonNode response = jsonMapper.readTree(send(client, "GET", "/orders/count", null, 200));
+        return response.required("totalCount").longValue();
     }
 
     private List<String> listOrderIds(HttpClient client, long userId)

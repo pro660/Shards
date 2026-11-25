@@ -20,10 +20,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 public class OrderController {
 
     private final OrderService orderService;
+    private final OrderCountService orderCountService;
 
-    // Spring이 기존 OrderService 객체를 전달합니다.
-    public OrderController(OrderService orderService) {
+    public OrderController(OrderService orderService, OrderCountService orderCountService) {
         this.orderService = orderService;
+        this.orderCountService = orderCountService;
     }
 
     // POST /orders 요청을 처리합니다.
@@ -60,6 +61,12 @@ public class OrderController {
         // 조회가 성공했다면 목록이 비어 있어도 200을 반환합니다.
         List<Order> orders = orderService.findByUserId(userId);
         return ResponseEntity.ok(orders);
+    }
+
+    @GetMapping("/count")
+    public ResponseEntity<OrderCountResponse> countAllOrders() {
+        long totalCount = orderCountService.countAllOrders();
+        return ResponseEntity.ok(new OrderCountResponse(totalCount));
     }
 
     @PatchMapping("/{orderId}/amount")
