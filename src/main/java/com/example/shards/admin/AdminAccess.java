@@ -21,6 +21,9 @@ public class AdminAccess {
     ) {
         this.readToken = readToken.getBytes(StandardCharsets.UTF_8);
         this.writeToken = writeToken.getBytes(StandardCharsets.UTF_8);
+        if (this.readToken.length > 0 && MessageDigest.isEqual(this.readToken, this.writeToken)) {
+            throw new IllegalArgumentException("조회용과 쓰기용 관리 토큰은 서로 달라야 합니다.");
+        }
     }
 
     public void requireRead(String authorization) {
