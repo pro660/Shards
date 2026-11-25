@@ -61,4 +61,14 @@ public class OrderExceptionHandler {
         problem.setTitle("Order status conflict");
         return problem;
     }
+
+    @ExceptionHandler(OrderQueryUnavailableException.class)
+    public ProblemDetail handleOrderQueryUnavailable() {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.SERVICE_UNAVAILABLE,
+                "일부 샤드 DB에 접근할 수 없어 전체 주문을 조회할 수 없습니다."
+        );
+        problem.setTitle("Order query unavailable");
+        return problem;
+    }
 }
