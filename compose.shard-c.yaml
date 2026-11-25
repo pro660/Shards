@@ -17,6 +17,7 @@ services:
       - shard_c_data:/var/lib/postgresql
       # 새 데이터 볼륨에서 최초 실행할 때 공통 주문 스키마를 만듭니다.
       - ./db/005-create-orders.sql:/docker-entrypoint-initdb.d/005-create-orders.sql:ro
+      - ./db/009-index-orders-by-bucket.sql:/docker-entrypoint-initdb.d/009-index-orders-by-bucket.sql:ro
 
     healthcheck:
       # 초기화에 쓰는 임시 서버는 소켓만 열므로 최종 서버의 TCP 포트로 검사합니다.
