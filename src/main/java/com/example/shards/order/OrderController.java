@@ -1,11 +1,15 @@
 package com.example.shards.order;
 
+import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 
 // HTTP 요청을 받고, 처리 결과를 JSON 응답으로 반환합니다.
 @RestController
@@ -35,5 +39,14 @@ public class OrderController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(order);
+    }
+
+    @GetMapping("/{orderId}")
+    public ResponseEntity<Order> findById(
+            @PathVariable("orderId") UUID orderId,
+            @RequestParam("userId") long userId
+    ) {
+        Order order = orderService.findById(userId, orderId);
+        return ResponseEntity.ok(order);
     }
 }
