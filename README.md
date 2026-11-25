@@ -1,9 +1,8 @@
 # 데이터 재배치를 지원하는 소형 DB 샤딩 시스템
 
-현재는 Java·Spring Boot의 기본 프로젝트다. DB나 Docker 없이 실행하며 `GET /health`로 서버 응답을 확인한다.
-기능은 작은 작업 하나씩 구현하고 확인하며 추가한다.
+Spring Boot와 PostgreSQL로 주문을 버킷 단위로 분산하고, 메타 DB에 저장한 재배치 작업으로 소유권을 전환한다. 실행 환경은 메타 DB, 샤드 A·B, 선택적 샤드 C로 구성한다.
 
-전체 목표와 장비 구성, 재배치, 백업·장애 대응, 팀 작업 방식은 [프로젝트 기획서](docs/project-plan.md)에 정리했다. 기획서의 구현 예정 기능과 현재 기본 코드의 상태는 구분한다.
+전체 설계는 [프로젝트 기획서](docs/project-plan.md)에 정리했다. 재배치, 백업·복원, 장애 수집, 별도 PC의 샤드 C 실험은 [백엔드 실습 가이드](docs/backend-operations.md)를 따른다.
 
 ## 개발 환경
 
@@ -11,7 +10,7 @@
 - Spring Boot 4.1.1
 - Gradle 9.8.1 Wrapper
 
-## 남아 있는 기본 코드
+## 기본 코드
 
 | 파일 | 역할 |
 | --- | --- |
@@ -23,9 +22,10 @@
 
 ## 실행과 확인
 
-프로젝트 루트의 PowerShell에서 실행한다.
+메타 DB에 `db/001`부터 `db/004`를, A·B에는 `db/005`를 처음 한 번 적용하고, 프로젝트 루트의 PowerShell에서 실행한다.
 
 ```powershell
+docker compose up -d meta-db shard-a shard-b
 .\gradlew.bat bootRun
 ```
 
@@ -49,7 +49,7 @@ Invoke-RestMethod http://localhost:8080/health
 1. 프로젝트를 열고 `build.gradle`을 Gradle 프로젝트로 연결한다.
 2. Project SDK와 Gradle JVM을 JDK 21로 설정한다.
 3. Gradle 배포는 Wrapper를 사용하고 동기화한다.
-4. `ShardsProApplication.main()`을 실행한다. 활성 프로필과 DB 설정은 필요 없다.
+4. `ShardsProApplication.main()`을 실행한다. 작업 디렉터리는 프로젝트 루트로 두고 로컬 `.env`에서 DB 연결 설정을 읽도록 한다.
 
 8080이 사용 중이면 기존 서버를 종료하거나 `bootRun --args="--server.port=8081"`로 실행한다.
 이 경우 확인 URL도 8081로 바꾼다.
