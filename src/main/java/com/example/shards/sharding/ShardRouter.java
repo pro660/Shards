@@ -2,6 +2,8 @@ package com.example.shards.sharding;
 
 import com.example.shards.meta.BucketMapping;
 import com.example.shards.meta.BucketMappingRepository;
+import com.example.shards.meta.OperationBusyException;
+import com.example.shards.meta.OperationLocks;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
@@ -11,19 +13,23 @@ public class ShardRouter {
 
     private final BucketMappingRepository bucketMappingRepository;
     private final ShardConnectionRegistry shardConnectionRegistry;
+    private final OperationLocks locks;
 
     public ShardRouter(
             BucketMappingRepository bucketMappingRepository,
-            ShardConnectionRegistry shardConnectionRegistry
+            ShardConnectionRegistry shardConnectionRegistry,
+            OperationLocks locks
     ) {
         this.bucketMappingRepository = bucketMappingRepository;
         this.shardConnectionRegistry = shardConnectionRegistry;
+        this.locks = locks;
     }
 
     public ShardRoute route(long userId) {
 
         // 사용자 번호가 잘못됐다면 해시 함수에서 예외가 발생합니다.
         int bucketId = BucketHasher.toBucketId(userId);
+        locks.allowWrite(bucketId);
 
         // 호출할 때마다 현재 매핑을 메타 DB에서 조회합니다.
         BucketMapping mapping =
@@ -31,11 +37,21 @@ public class ShardRouter {
 
         // NORMAL인 버킷만 허용합니다.
         if (!"NORMAL".equals(mapping.state())) {
-            throw new IllegalStateException(
+            throw new OperationBusyException(
                     "현재 요청을 처리할 수 없는 버킷입니다: " + bucketId
             );
         }
 
+        return resolve(mapping);
+    }
+
+    public ShardRoute routeForRead(long userId) {
+        int bucketId = BucketHasher.toBucketId(userId);
+        locks.allowRead(bucketId);
+        return resolve(bucketMappingRepository.findByBucketId(bucketId));
+    }
+
+    private ShardRoute resolve(BucketMapping mapping) {
         // 사용이 허용된 샤드인지 확인합니다.
         if (!"ACTIVE".equals(mapping.shardStatus())) {
             throw new IllegalStateException(

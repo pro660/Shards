@@ -58,7 +58,9 @@ class OrderQueryFailureTest {
         when(registry.getJdbcTemplate("shardA")).thenReturn(shardA);
         when(registry.getJdbcTemplate("shardB")).thenReturn(shardB);
 
-        OrderQueryService service = new OrderQueryService(mappings, registry, orderRepository);
+        OrderQueryService service = new OrderQueryService(
+                mappings, registry, orderRepository, mock(com.example.shards.meta.OperationLocks.class)
+        );
         mvc = MockMvcBuilders.standaloneSetup(new OrderController(mock(OrderService.class), service))
                 .setControllerAdvice(new OrderExceptionHandler())
                 .build();

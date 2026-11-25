@@ -9,9 +9,11 @@ import java.util.UUID;
 import com.example.shards.sharding.ShardRoute;
 import com.example.shards.sharding.ShardRouter;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 // 주문 요청의 입력 검사와 처리 순서를 담당합니다.
 @Service
+@Transactional
 public class OrderService {
 
     // orders.amount의 NUMERIC(12, 2) 범위에 맞춘 최댓값입니다.
@@ -55,7 +57,7 @@ public class OrderService {
         validateUserId(userId);
 
         // 주문을 생성할 때와 같은 규칙으로 현재 담당 샤드를 찾습니다.
-        ShardRoute route = shardRouter.route(userId);
+        ShardRoute route = shardRouter.routeForRead(userId);
 
         return orderRepository.findById(
                 route.jdbcTemplate(),
@@ -69,7 +71,7 @@ public class OrderService {
         validateUserId(userId);
 
         // 사용자 번호로 현재 담당 샤드 한 곳을 찾습니다.
-        ShardRoute route = shardRouter.route(userId);
+        ShardRoute route = shardRouter.routeForRead(userId);
 
         return orderRepository.findByUserId(
                 route.jdbcTemplate(),

@@ -11,6 +11,7 @@ import java.util.function.Function;
 
 import com.example.shards.meta.BucketMapping;
 import com.example.shards.meta.BucketMappingRepository;
+import com.example.shards.meta.OperationLocks;
 import com.example.shards.sharding.BucketHasher;
 import com.example.shards.sharding.ShardConnectionRegistry;
 import org.slf4j.Logger;
@@ -19,8 +20,10 @@ import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.TransientDataAccessResourceException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional
 public class OrderQueryService {
 
     private static final Logger log = LoggerFactory.getLogger(OrderQueryService.class);
@@ -35,15 +38,18 @@ public class OrderQueryService {
     private final BucketMappingRepository bucketMappingRepository;
     private final ShardConnectionRegistry shardConnectionRegistry;
     private final OrderRepository orderRepository;
+    private final OperationLocks locks;
 
     public OrderQueryService(
             BucketMappingRepository bucketMappingRepository,
             ShardConnectionRegistry shardConnectionRegistry,
-            OrderRepository orderRepository
+            OrderRepository orderRepository,
+            OperationLocks locks
     ) {
         this.bucketMappingRepository = bucketMappingRepository;
         this.shardConnectionRegistry = shardConnectionRegistry;
         this.orderRepository = orderRepository;
+        this.locks = locks;
     }
 
     public long countAllOrders() {
@@ -93,6 +99,7 @@ public class OrderQueryService {
     }
 
     private Map<String, List<Integer>> findOwnedBucketsByShard() {
+        locks.allowReadAll();
         List<BucketMapping> mappings = bucketMappingRepository.findAll();
         if (mappings.size() != BucketHasher.BUCKET_COUNT) {
             throw new IllegalStateException("전체 주문을 조회하려면 모든 버킷의 소유권이 필요합니다.");

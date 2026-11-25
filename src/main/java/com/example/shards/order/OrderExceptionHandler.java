@@ -1,5 +1,6 @@
 package com.example.shards.order;
 
+import com.example.shards.meta.OperationBusyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -69,6 +70,13 @@ public class OrderExceptionHandler {
                 "일부 샤드 DB에 접근할 수 없어 전체 주문을 조회할 수 없습니다."
         );
         problem.setTitle("Order query unavailable");
+        return problem;
+    }
+
+    @ExceptionHandler(OperationBusyException.class)
+    public ProblemDetail handleBusyOperation(OperationBusyException exception) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.SERVICE_UNAVAILABLE, exception.getMessage());
+        problem.setTitle("Order operation temporarily unavailable");
         return problem;
     }
 }

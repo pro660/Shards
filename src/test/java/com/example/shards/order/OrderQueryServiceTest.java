@@ -40,7 +40,9 @@ class OrderQueryServiceTest {
         when(orderRepository.countByBucketIds(shardA, List.of(0, 1, 2, 4, 5, 6, 7))).thenReturn(4L);
         when(orderRepository.countByBucketIds(shardB, List.of(3, 8, 9, 10, 11, 12, 13, 14, 15))).thenReturn(5L);
 
-        OrderQueryService service = new OrderQueryService(mappingRepository, registry, orderRepository);
+        OrderQueryService service = new OrderQueryService(
+                mappingRepository, registry, orderRepository, mock(com.example.shards.meta.OperationLocks.class)
+        );
 
         assertThat(service.countAllOrders()).isEqualTo(9);
     }

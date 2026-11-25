@@ -4,6 +4,7 @@ import com.example.shards.meta.BucketMapping;
 import com.example.shards.meta.BucketMappingRepository;
 import com.example.shards.meta.MigrationJob;
 import com.example.shards.meta.MigrationJobRepository;
+import com.example.shards.meta.OperationLocks;
 import com.example.shards.meta.ShardRepository;
 import com.example.shards.sharding.BucketHasher;
 import org.springframework.stereotype.Service;
@@ -15,15 +16,18 @@ public class MigrationJobService {
     private final BucketMappingRepository bucketMappingRepository;
     private final ShardRepository shardRepository;
     private final MigrationJobRepository migrationJobRepository;
+    private final OperationLocks locks;
 
     public MigrationJobService(
             BucketMappingRepository bucketMappingRepository,
             ShardRepository shardRepository,
-            MigrationJobRepository migrationJobRepository
+            MigrationJobRepository migrationJobRepository,
+            OperationLocks locks
     ) {
         this.bucketMappingRepository = bucketMappingRepository;
         this.shardRepository = shardRepository;
         this.migrationJobRepository = migrationJobRepository;
+        this.locks = locks;
     }
 
     @Transactional
@@ -35,6 +39,7 @@ public class MigrationJobService {
             throw new IllegalArgumentException("도착 샤드 번호는 1부터 " + Short.MAX_VALUE + "까지입니다.");
         }
 
+        locks.allowChanges();
         // 출발 샤드와 버전은 같은 트랜잭션에서 현재 매핑을 읽어 결정합니다.
         BucketMapping mapping = bucketMappingRepository.findByBucketIdForShare(bucketId)
                 .orElseThrow(() -> new IllegalArgumentException("버킷의 매핑을 찾을 수 없습니다."));

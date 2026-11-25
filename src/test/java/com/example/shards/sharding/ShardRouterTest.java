@@ -23,7 +23,7 @@ class ShardRouterTest {
 
     // 라우터 자체는 실제 구현을 사용합니다.
     private final ShardRouter router =
-            new ShardRouter(repository, registry);
+            new ShardRouter(repository, registry, mock(com.example.shards.meta.OperationLocks.class));
 
     @Test
     void routesToActiveShard() {
