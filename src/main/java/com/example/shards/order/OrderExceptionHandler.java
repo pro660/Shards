@@ -41,4 +41,14 @@ public class OrderExceptionHandler {
 
         return problem;
     }
+
+    @ExceptionHandler(OrderNotFoundException.class)
+    public ProblemDetail handleOrderNotFound(OrderNotFoundException exception) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.NOT_FOUND,
+                exception.getMessage()
+        );
+        problem.setTitle("Order not found");
+        return problem;
+    }
 }
