@@ -54,7 +54,7 @@ public class ShardRouter {
     private ShardRoute resolve(BucketMapping mapping) {
         // 사용이 허용된 샤드인지 확인합니다.
         if (!"ACTIVE".equals(mapping.shardStatus())) {
-            throw new IllegalStateException(
+            throw new OperationBusyException(
                     "사용할 수 없는 샤드입니다: " + mapping.shardName()
             );
         }

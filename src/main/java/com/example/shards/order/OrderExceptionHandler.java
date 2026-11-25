@@ -1,6 +1,8 @@
 package com.example.shards.order;
 
 import com.example.shards.meta.OperationBusyException;
+import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.dao.TransientDataAccessResourceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -77,6 +79,15 @@ public class OrderExceptionHandler {
     public ProblemDetail handleBusyOperation(OperationBusyException exception) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.SERVICE_UNAVAILABLE, exception.getMessage());
         problem.setTitle("Order operation temporarily unavailable");
+        return problem;
+    }
+
+    @ExceptionHandler({DataAccessResourceFailureException.class, TransientDataAccessResourceException.class})
+    public ProblemDetail handleShardConnectionFailure() {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.SERVICE_UNAVAILABLE, "주문을 담당하는 DB에 접근할 수 없습니다."
+        );
+        problem.setTitle("Order database unavailable");
         return problem;
     }
 }
