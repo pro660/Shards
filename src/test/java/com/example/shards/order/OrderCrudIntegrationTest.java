@@ -7,6 +7,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
 
@@ -192,6 +193,39 @@ class OrderCrudIntegrationTest {
         }
     }
 
+    @Test
+    void listsRecentOrdersAcrossShardsInGlobalOrder() throws IOException, InterruptedException {
+        UUID newestId = UUID.randomUUID();
+        // 시각이 같을 때 PostgreSQL UUID 순서에서 8로 시작하는 값이 7보다 앞섭니다.
+        UUID higherId = new UUID(Long.MIN_VALUE, UUID.randomUUID().getLeastSignificantBits());
+        UUID lowerId = new UUID(Long.MAX_VALUE, UUID.randomUUID().getLeastSignificantBits());
+        UUID copyOnlyId = UUID.randomUUID();
+        OffsetDateTime tiedAt = OffsetDateTime.now(ZoneOffset.UTC).plusDays(1);
+        List<String> fixtureIds = List.of(newestId.toString(), higherId.toString(), lowerId.toString());
+
+        try (HttpClient client = newClient()) {
+            insertOrderFixture("shardA", lowerId, 1L, 3, tiedAt);
+            insertOrderFixture("shardB", higherId, 101L, 10, tiedAt);
+            insertOrderFixture("shardA", newestId, 1L, 3, tiedAt.plusSeconds(1));
+            insertOrderFixture("shardB", lowerId, 1L, 3, tiedAt);
+            insertOrderFixture("shardB", copyOnlyId, 1L, 3, tiedAt.plusSeconds(2));
+
+            JsonNode orders = jsonMapper.readTree(send(client, "GET", "/orders/all", null, 200));
+            assertThat(orders.isArray()).isTrue();
+            assertThat(orders.size()).isLessThanOrEqualTo(50);
+            List<String> orderIds = orders.valueStream().map(order -> order.path("orderId").stringValue()).toList();
+
+            assertThat(orderIds.stream().filter(fixtureIds::contains).toList()).containsExactlyElementsOf(fixtureIds);
+            assertThat(orderIds).doesNotContain(copyOnlyId.toString());
+        } finally {
+            for (String shard : List.of("shardA", "shardB")) {
+                shardConnectionRegistry.getJdbcTemplate(shard).update(
+                        "DELETE FROM orders WHERE order_id IN (?, ?, ?, ?)", newestId, higherId, lowerId, copyOnlyId
+                );
+            }
+        }
+    }
+
     @AfterEach
     void removeTestOrderIfPresent() {
         if (testOrderId == null) {
@@ -222,6 +256,13 @@ class OrderCrudIntegrationTest {
         return shardConnectionRegistry.getJdbcTemplate(shard).queryForObject(
                 "SELECT COUNT(*) FROM orders WHERE order_id = ?", Long.class, testOrderId
         );
+    }
+
+    private void insertOrderFixture(String shard, UUID orderId, long userId, int bucketId, OffsetDateTime createdAt) {
+        shardConnectionRegistry.getJdbcTemplate(shard).update("""
+                INSERT INTO orders (order_id, user_id, bucket_id, amount, created_at, updated_at)
+                VALUES (?, ?, ?, 15000.00, ?, ?)
+                """, orderId, userId, bucketId, createdAt, createdAt);
     }
 
     private long countRowsInRange(String shard, int firstBucket, int lastBucket) {
