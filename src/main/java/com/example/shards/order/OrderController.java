@@ -70,4 +70,14 @@ public class OrderController {
         Order order = orderService.updateAmount(userId, orderId, request.amount());
         return ResponseEntity.ok(order);
     }
+
+    @PatchMapping("/{orderId}/status")
+    public ResponseEntity<Order> updateStatus(
+            @PathVariable("orderId") UUID orderId,
+            @RequestParam("userId") long userId,
+            @RequestBody UpdateOrderStatusRequest request
+    ) {
+        Order order = orderService.updateStatus(userId, orderId, request.status());
+        return ResponseEntity.ok(order);
+    }
 }

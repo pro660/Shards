@@ -3,6 +3,7 @@ package com.example.shards.order;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import com.example.shards.sharding.ShardRoute;
@@ -90,6 +91,35 @@ public class OrderService {
                 route.mapping().bucketId(),
                 normalizedAmount
         ).orElseThrow(OrderNotFoundException::new);
+    }
+
+    public Order updateStatus(long userId, UUID orderId, String requestedStatus) {
+        validateUserId(userId);
+        if (!"PAID".equals(requestedStatus) && !"CANCELLED".equals(requestedStatus)) {
+            throw new InvalidOrderRequestException("status는 PAID 또는 CANCELLED여야 합니다.");
+        }
+
+        ShardRoute route = shardRouter.route(userId);
+        int bucketId = route.mapping().bucketId();
+
+        Optional<Order> updatedOrder = orderRepository.updateStatus(
+                route.jdbcTemplate(), orderId, userId, bucketId, requestedStatus
+        );
+        if (updatedOrder.isPresent()) {
+            return updatedOrder.get();
+        }
+
+        // 변경된 행이 없으면 같은 샤드에서 주문의 현재 상태를 확인합니다.
+        Order currentOrder = orderRepository.findById(
+                route.jdbcTemplate(), orderId, userId, bucketId
+        ).orElseThrow(OrderNotFoundException::new);
+
+        // 요청한 상태로 이미 바뀌어 있다면 다시 저장할 필요가 없습니다.
+        if (requestedStatus.equals(currentOrder.status())) {
+            return currentOrder;
+        }
+
+        throw new OrderStatusConflictException(currentOrder.status(), requestedStatus);
     }
 
     private static void validateUserId(long userId) {

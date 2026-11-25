@@ -51,4 +51,14 @@ public class OrderExceptionHandler {
         problem.setTitle("Order not found");
         return problem;
     }
+
+    @ExceptionHandler(OrderStatusConflictException.class)
+    public ProblemDetail handleOrderStatusConflict(OrderStatusConflictException exception) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.CONFLICT,
+                exception.getMessage()
+        );
+        problem.setTitle("Order status conflict");
+        return problem;
+    }
 }

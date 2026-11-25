@@ -165,4 +165,42 @@ public class OrderRepository {
                 )
         );
     }
+
+    public Optional<Order> updateStatus(
+            JdbcTemplate shardJdbcTemplate,
+            UUID orderId,
+            long userId,
+            int bucketId,
+            String requestedStatus
+    ) {
+        // 동시에 다른 요청이 와도 현재 상태가 CREATED일 때만 변경합니다.
+        String sql = """
+                UPDATE orders
+                SET status = ?,
+                    updated_at = statement_timestamp()
+                WHERE order_id = ?
+                  AND user_id = ?
+                  AND bucket_id = ?
+                  AND status = 'CREATED'
+                RETURNING
+                    order_id,
+                    user_id,
+                    bucket_id,
+                    amount,
+                    status,
+                    created_at,
+                    updated_at
+                """;
+
+        return DataAccessUtils.optionalResult(
+                shardJdbcTemplate.query(
+                        sql,
+                        ORDER_ROW_MAPPER,
+                        requestedStatus,
+                        orderId,
+                        userId,
+                        bucketId
+                )
+        );
+    }
 }
