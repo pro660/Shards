@@ -1,0 +1,29 @@
+# 로컬 재배치 실험용 샤드 C를 별도 Compose 프로젝트로 실행합니다.
+name: shards-study-c
+
+services:
+  shard-c:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: ${SHARD_C_DB_NAME:?SHARD_C_DB_NAME is required}
+      POSTGRES_USER: ${SHARD_C_DB_USER:?SHARD_C_DB_USER is required}
+      POSTGRES_PASSWORD: ${SHARD_C_DB_PASSWORD:?SHARD_C_DB_PASSWORD is required}
+
+    # 내 PC의 15435번 포트를 컨테이너의 PostgreSQL 포트에 연결합니다.
+    ports:
+      - "127.0.0.1:15435:5432"
+
+    volumes:
+      - shard_c_data:/var/lib/postgresql
+      # 새 데이터 볼륨에서 최초 실행할 때 공통 주문 스키마를 만듭니다.
+      - ./db/005-create-orders.sql:/docker-entrypoint-initdb.d/005-create-orders.sql:ro
+
+    healthcheck:
+      # 초기화에 쓰는 임시 서버는 소켓만 열므로 최종 서버의 TCP 포트로 검사합니다.
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+volumes:
+  shard_c_data:

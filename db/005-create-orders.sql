@@ -1,4 +1,4 @@
--- 해당 sql 쿼리는 메타DB가 아닌 샤드 A,B에서 직접 실행됨.
+-- 주문을 저장하는 각 샤드 DB에서 공통으로 사용하는 스키마입니다.
 CREATE TABLE orders (
     -- 주문 번호는 나중에 Java에서 UUID로 만들어 전달.
     order_id UUID PRIMARY KEY,
