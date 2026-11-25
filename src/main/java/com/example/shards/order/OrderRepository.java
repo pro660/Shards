@@ -18,7 +18,7 @@ import org.springframework.stereotype.Repository;
 public class OrderRepository {
 
     // 저장 결과와 조회 결과를 같은 방식으로 Order 객체로 바꿉니다.
-    private static final RowMapper<Order> ORDER_ROW_MAPPER =
+    static final RowMapper<Order> ORDER_ROW_MAPPER =
             (rs, rowNum) -> new Order(
                     rs.getObject("order_id", UUID.class),
                     rs.getLong("user_id"),

@@ -73,4 +73,18 @@ public class BucketMappingRepository {
                 BUCKET_MAPPING_ROW_MAPPER, bucketId
         ));
     }
+
+    public boolean beginMigration(MigrationJob job) {
+        return jdbcTemplate.update("""
+                UPDATE public.bucket_mapping SET state = 'MIGRATING'
+                WHERE bucket_id = ? AND shard_id = ? AND version = ? AND state = 'NORMAL'
+                """, job.bucketId(), job.sourceShardId(), job.sourceMappingVersion()) == 1;
+    }
+
+    public boolean switchOwner(MigrationJob job) {
+        return jdbcTemplate.update("""
+                UPDATE public.bucket_mapping SET shard_id = ?, state = 'NORMAL', version = version + 1
+                WHERE bucket_id = ? AND shard_id = ? AND version = ? AND state = 'MIGRATING'
+                """, job.targetShardId(), job.bucketId(), job.sourceShardId(), job.sourceMappingVersion()) == 1;
+    }
 }

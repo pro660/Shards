@@ -71,4 +71,58 @@ public class MigrationJobRepository {
                 SELECT_JOBS + "WHERE finished_at IS NULL", MIGRATION_JOB_ROW_MAPPER
         ));
     }
+
+    public Optional<MigrationJob> findByIdForUpdate(long jobId) {
+        return DataAccessUtils.optionalResult(jdbcTemplate.query(
+                SELECT_JOBS + "WHERE job_id = ? FOR UPDATE NOWAIT", MIGRATION_JOB_ROW_MAPPER, jobId
+        ));
+    }
+
+    public void advance(MigrationJob job, String nextPhase) {
+        requireUpdated(jdbcTemplate.update("""
+                UPDATE public.migration_jobs
+                SET phase = ?, last_error = NULL, updated_at = statement_timestamp()
+                WHERE job_id = ? AND phase = ?
+                """, nextPhase, job.jobId(), job.phase()));
+    }
+
+    public void saveCheckpoint(MigrationJob job, UUID lastOrderId, int count) {
+        requireUpdated(jdbcTemplate.update("""
+                UPDATE public.migration_jobs
+                SET last_copied_order_id = ?, copied_order_count = copied_order_count + ?,
+                    last_error = NULL, updated_at = statement_timestamp()
+                WHERE job_id = ? AND phase = 'COPYING'
+                """, lastOrderId, count, job.jobId()));
+    }
+
+    public void markVerified(MigrationJob job) {
+        requireUpdated(jdbcTemplate.update("""
+                UPDATE public.migration_jobs
+                SET phase = 'SWITCHING', verified_at = statement_timestamp(),
+                    last_error = NULL, updated_at = statement_timestamp()
+                WHERE job_id = ? AND phase = 'VERIFYING'
+                """, job.jobId()));
+    }
+
+    public void markCompleted(MigrationJob job) {
+        requireUpdated(jdbcTemplate.update("""
+                UPDATE public.migration_jobs
+                SET phase = 'COMPLETED', finished_at = statement_timestamp(),
+                    last_error = NULL, updated_at = statement_timestamp()
+                WHERE job_id = ? AND phase = 'CLEANING'
+                """, job.jobId()));
+    }
+
+    public void touchCleaning(MigrationJob job) {
+        requireUpdated(jdbcTemplate.update("""
+                UPDATE public.migration_jobs SET last_error = NULL, updated_at = statement_timestamp()
+                WHERE job_id = ? AND phase = 'CLEANING'
+                """, job.jobId()));
+    }
+
+    private static void requireUpdated(int rowCount) {
+        if (rowCount != 1) {
+            throw new IllegalStateException("재배치 작업 상태가 바뀌었습니다.");
+        }
+    }
 }

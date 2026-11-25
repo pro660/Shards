@@ -22,4 +22,11 @@ public class ShardRepository {
                 String.class, shardId
         ));
     }
+
+    public Optional<String> findActiveConnectionKeyForShare(int shardId) {
+        return DataAccessUtils.optionalResult(jdbcTemplate.queryForList(
+                "SELECT connection_key FROM public.shards WHERE shard_id = ? AND status = 'ACTIVE' FOR SHARE",
+                String.class, shardId
+        ));
+    }
 }
