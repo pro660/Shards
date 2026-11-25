@@ -11,6 +11,7 @@ import java.util.UUID;
 
 import com.example.shards.sharding.ShardConnectionRegistry;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,16 +48,8 @@ class OrderCrudIntegrationTest {
             String expectedShard,
             String otherShard
     ) throws IOException, InterruptedException {
-        testUserId = userId;
-
-        try (HttpClient client = HttpClient.newBuilder()
-                .connectTimeout(Duration.ofSeconds(5))
-                .build()) {
-            String createBody = "{\"userId\":" + userId + ",\"amount\":15000.00}";
-            JsonNode created = jsonMapper.readTree(
-                    send(client, "POST", "/orders", createBody, 201)
-            );
-            testOrderId = UUID.fromString(created.path("orderId").stringValue());
+        try (HttpClient client = newClient()) {
+            JsonNode created = createTestOrder(client, userId);
             assertThat(created.path("userId").longValue()).isEqualTo(userId);
             assertThat(created.path("bucketId").intValue()).isEqualTo(expectedBucketId);
             assertThat(created.path("amount").decimalValue()).isEqualByComparingTo("15000.00");
@@ -97,6 +90,71 @@ class OrderCrudIntegrationTest {
         }
     }
 
+    @Test
+    void returnsBadRequestForMalformedJson() throws IOException, InterruptedException {
+        try (HttpClient client = newClient()) {
+            assertProblem(client, "POST", "/orders", "{\"userId\":1,\"amount\":}",
+                    400, "Invalid request body", "요청 JSON의 형식");
+        }
+    }
+
+    @Test
+    void rejectsNegativeAmountWithoutChangingOrder() throws IOException, InterruptedException {
+        try (HttpClient client = newClient()) {
+            JsonNode created = createTestOrder(client, 1L);
+            String orderPath = "/orders/" + testOrderId;
+
+            assertProblem(client, "PATCH", orderPath + "/amount?userId=1", "{\"amount\":-1}",
+                    400, "Invalid order request", "주문 금액은 0 이상");
+
+            JsonNode unchanged = jsonMapper.readTree(send(client, "GET", orderPath + "?userId=1", null, 200));
+            assertThat(unchanged).isEqualTo(created);
+        }
+    }
+
+    @Test
+    void returnsNotFoundForUnknownOrder() throws IOException, InterruptedException {
+        try (HttpClient client = newClient()) {
+            String path = "/orders/" + UUID.randomUUID() + "?userId=1";
+            assertProblem(client, "GET", path, null,
+                    404, "Order not found", "해당 사용자의 주문을 찾을 수 없습니다.");
+        }
+    }
+
+    @Test
+    void returnsNotFoundForAnotherUsersOrderInSameBucket() throws IOException, InterruptedException {
+        try (HttpClient client = newClient()) {
+            JsonNode created = createTestOrder(client, 1L);
+            String orderPath = "/orders/" + testOrderId;
+
+            // 사용자 1과 25는 버킷 3을 공유하므로 같은 DB에서 사용자 조건을 검사합니다.
+            assertProblem(client, "GET", orderPath + "?userId=25", null,
+                    404, "Order not found", "해당 사용자의 주문을 찾을 수 없습니다.");
+            assertProblem(client, "DELETE", orderPath + "?userId=25", null,
+                    404, "Order not found", "해당 사용자의 주문을 찾을 수 없습니다.");
+
+            JsonNode unchanged = jsonMapper.readTree(send(client, "GET", orderPath + "?userId=1", null, 200));
+            assertThat(unchanged).isEqualTo(created);
+        }
+    }
+
+    @Test
+    void returnsConflictWithoutChangingPaidOrder() throws IOException, InterruptedException {
+        try (HttpClient client = newClient()) {
+            createTestOrder(client, 1L);
+            String orderPath = "/orders/" + testOrderId;
+            String statusPath = orderPath + "/status?userId=1";
+            JsonNode paid = jsonMapper.readTree(send(client, "PATCH", statusPath, "{\"status\":\"PAID\"}", 200));
+            assertThat(paid.path("status").stringValue()).isEqualTo("PAID");
+
+            assertProblem(client, "PATCH", statusPath, "{\"status\":\"CANCELLED\"}",
+                    409, "Order status conflict", "PAID에서 CANCELLED로 변경할 수 없습니다.");
+
+            JsonNode unchanged = jsonMapper.readTree(send(client, "GET", orderPath + "?userId=1", null, 200));
+            assertThat(unchanged).isEqualTo(paid);
+        }
+    }
+
     @AfterEach
     void removeTestOrderIfPresent() {
         if (testOrderId == null) {
@@ -109,6 +167,18 @@ class OrderCrudIntegrationTest {
                     "DELETE FROM orders WHERE order_id = ? AND user_id = ?", testOrderId, testUserId
             );
         }
+    }
+
+    private HttpClient newClient() {
+        return HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
+    }
+
+    private JsonNode createTestOrder(HttpClient client, long userId) throws IOException, InterruptedException {
+        String body = "{\"userId\":" + userId + ",\"amount\":15000.00}";
+        JsonNode created = jsonMapper.readTree(send(client, "POST", "/orders", body, 201));
+        testUserId = userId;
+        testOrderId = UUID.fromString(created.path("orderId").stringValue());
+        return created;
     }
 
     private long countTestOrder(String shard) {
@@ -126,6 +196,26 @@ class OrderCrudIntegrationTest {
 
     private String send(HttpClient client, String method, String path, String body, int expectedStatus)
             throws IOException, InterruptedException {
+        return sendResponse(client, method, path, body, expectedStatus).body();
+    }
+
+    private void assertProblem(
+            HttpClient client, String method, String path, String body,
+            int expectedStatus, String expectedTitle, String expectedDetailPart
+    ) throws IOException, InterruptedException {
+        HttpResponse<String> response = sendResponse(client, method, path, body, expectedStatus);
+        assertThat(response.headers().firstValue("Content-Type"))
+                .hasValueSatisfying(contentType -> assertThat(contentType).startsWith("application/problem+json"));
+
+        JsonNode problem = jsonMapper.readTree(response.body());
+        assertThat(problem.path("status").intValue()).isEqualTo(expectedStatus);
+        assertThat(problem.path("title").stringValue()).isEqualTo(expectedTitle);
+        assertThat(problem.path("detail").stringValue()).contains(expectedDetailPart);
+    }
+
+    private HttpResponse<String> sendResponse(
+            HttpClient client, String method, String path, String body, int expectedStatus
+    ) throws IOException, InterruptedException {
         HttpRequest.Builder request = HttpRequest.newBuilder(URI.create("http://127.0.0.1:" + port + path))
                 .timeout(Duration.ofSeconds(10));
         if (body == null) {
@@ -139,6 +229,6 @@ class OrderCrudIntegrationTest {
         assertThat(response.statusCode())
                 .as("%s %s, response: %s", method, path, response.body())
                 .isEqualTo(expectedStatus);
-        return response.body();
+        return response;
     }
 }
