@@ -20,11 +20,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 public class OrderController {
 
     private final OrderService orderService;
-    private final OrderCountService orderCountService;
+    private final OrderQueryService orderQueryService;
 
-    public OrderController(OrderService orderService, OrderCountService orderCountService) {
+    public OrderController(OrderService orderService, OrderQueryService orderQueryService) {
         this.orderService = orderService;
-        this.orderCountService = orderCountService;
+        this.orderQueryService = orderQueryService;
     }
 
     // POST /orders 요청을 처리합니다.
@@ -65,8 +65,13 @@ public class OrderController {
 
     @GetMapping("/count")
     public ResponseEntity<OrderCountResponse> countAllOrders() {
-        long totalCount = orderCountService.countAllOrders();
+        long totalCount = orderQueryService.countAllOrders();
         return ResponseEntity.ok(new OrderCountResponse(totalCount));
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<List<Order>> findRecentOrders() {
+        return ResponseEntity.ok(orderQueryService.findRecentOrders());
     }
 
     @PatchMapping("/{orderId}/amount")

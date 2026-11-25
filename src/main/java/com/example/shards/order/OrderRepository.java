@@ -141,6 +141,23 @@ public class OrderRepository {
         return namedJdbcTemplate.queryForObject(sql, Map.of("bucketIds", bucketIds), Long.class);
     }
 
+    public List<Order> findRecentByBucketIds(JdbcTemplate shardJdbcTemplate, List<Integer> bucketIds, int limit) {
+        if (bucketIds.isEmpty()) {
+            return List.of();
+        }
+
+        // 이 샤드가 소유한 버킷의 주문만 정렬해 필요한 만큼 가져옵니다.
+        String sql = """
+                SELECT order_id, user_id, bucket_id, amount, status, created_at, updated_at
+                FROM orders
+                WHERE bucket_id IN (:bucketIds)
+                ORDER BY created_at DESC, order_id DESC
+                LIMIT :limit
+                """;
+        NamedParameterJdbcTemplate namedJdbcTemplate = new NamedParameterJdbcTemplate(shardJdbcTemplate);
+        return namedJdbcTemplate.query(sql, Map.of("bucketIds", bucketIds, "limit", limit), ORDER_ROW_MAPPER);
+    }
+
     public Optional<Order> updateAmount(
             JdbcTemplate shardJdbcTemplate,
             UUID orderId,
