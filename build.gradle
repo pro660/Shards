@@ -37,4 +37,5 @@ tasks.withType(JavaCompile).configureEach {
 
 tasks.named('test') {
     useJUnitPlatform()
+    inputs.property('runShardCTest', providers.environmentVariable('RUN_SHARD_C_TEST').orElse('false'))
 }
