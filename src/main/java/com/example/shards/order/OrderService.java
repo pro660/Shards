@@ -30,11 +30,7 @@ public class OrderService {
     public Order create(long userId, BigDecimal amount) {
 
         // 잘못된 입력은 DB 조회 전에 거부합니다.
-        if (userId <= 0) {
-            throw new InvalidOrderRequestException(
-                    "userId는 1 이상이어야 합니다."
-            );
-        }
+        validateUserId(userId);
 
         if (amount == null) {
             throw new InvalidOrderRequestException(
@@ -75,5 +71,27 @@ public class OrderService {
                 route.mapping().bucketId(),
                 normalizedAmount
         );
+    }
+
+    public Order findById(long userId, UUID orderId) {
+        validateUserId(userId);
+
+        // 주문을 생성할 때와 같은 규칙으로 현재 담당 샤드를 찾습니다.
+        ShardRoute route = shardRouter.route(userId);
+
+        return orderRepository.findById(
+                route.jdbcTemplate(),
+                orderId,
+                userId,
+                route.mapping().bucketId()
+        ).orElseThrow(OrderNotFoundException::new);
+    }
+
+    private static void validateUserId(long userId) {
+        if (userId <= 0) {
+            throw new InvalidOrderRequestException(
+                    "userId는 1 이상이어야 합니다."
+            );
+        }
     }
 }
