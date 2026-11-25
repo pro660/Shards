@@ -2,6 +2,7 @@ package com.example.shards.order;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.UUID;
 import java.util.Optional;
 import org.springframework.dao.support.DataAccessUtils;
@@ -94,6 +95,36 @@ public class OrderRepository {
                         userId,
                         bucketId
                 )
+        );
+    }
+
+    public List<Order> findByUserId(
+            JdbcTemplate shardJdbcTemplate,
+            long userId,
+            int bucketId
+    ) {
+        // 같은 버킷에 여러 사용자가 있으므로 사용자 번호도 함께 확인합니다.
+        String sql = """
+                SELECT
+                    order_id,
+                    user_id,
+                    bucket_id,
+                    amount,
+                    status,
+                    created_at,
+                    updated_at
+                FROM orders
+                WHERE user_id = ?
+                  AND bucket_id = ?
+                ORDER BY created_at DESC, order_id DESC
+                """;
+
+        // 조회한 각 행을 Order로 바꿉니다. 결과가 0건이면 빈 리스트입니다.
+        return shardJdbcTemplate.query(
+                sql,
+                ORDER_ROW_MAPPER,
+                userId,
+                bucketId
         );
     }
 }

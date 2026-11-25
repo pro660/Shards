@@ -2,6 +2,7 @@ package com.example.shards.order;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.List;
 import java.util.UUID;
 
 import com.example.shards.sharding.ShardRoute;
@@ -85,6 +86,19 @@ public class OrderService {
                 userId,
                 route.mapping().bucketId()
         ).orElseThrow(OrderNotFoundException::new);
+    }
+
+    public List<Order> findByUserId(long userId) {
+        validateUserId(userId);
+
+        // 사용자 번호로 현재 담당 샤드 한 곳을 찾습니다.
+        ShardRoute route = shardRouter.route(userId);
+
+        return orderRepository.findByUserId(
+                route.jdbcTemplate(),
+                userId,
+                route.mapping().bucketId()
+        );
     }
 
     private static void validateUserId(long userId) {

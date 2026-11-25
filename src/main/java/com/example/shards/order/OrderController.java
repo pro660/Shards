@@ -1,5 +1,6 @@
 package com.example.shards.order;
 
+import java.util.List;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -48,5 +49,14 @@ public class OrderController {
     ) {
         Order order = orderService.findById(userId, orderId);
         return ResponseEntity.ok(order);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<Order>> findByUserId(
+            @RequestParam("userId") long userId
+    ) {
+        // 조회가 성공했다면 목록이 비어 있어도 200을 반환합니다.
+        List<Order> orders = orderService.findByUserId(userId);
+        return ResponseEntity.ok(orders);
     }
 }
