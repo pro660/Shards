@@ -9,7 +9,7 @@ import com.example.shards.sharding.ShardRoute;
 import com.example.shards.sharding.ShardRouter;
 import org.springframework.stereotype.Service;
 
-// 주문 생성에 필요한 검사와 처리 순서를 담당합니다.
+// 주문 요청의 입력 검사와 처리 순서를 담당합니다.
 @Service
 public class OrderService {
 
@@ -32,31 +32,7 @@ public class OrderService {
 
         // 잘못된 입력은 DB 조회 전에 거부합니다.
         validateUserId(userId);
-
-        if (amount == null) {
-            throw new InvalidOrderRequestException(
-                    "주문 금액은 필수입니다."
-            );
-        }
-
-        if (amount.signum() < 0 || amount.compareTo(MAX_AMOUNT) > 0) {
-            throw new InvalidOrderRequestException(
-                    "주문 금액은 0 이상 9999999999.99 이하여야 합니다."
-            );
-        }
-
-        BigDecimal normalizedAmount;
-
-        try {
-            // 값을 바꾸지 않고 소수 둘째 자리까지 표현합니다.
-            normalizedAmount = amount.setScale(2, RoundingMode.UNNECESSARY);
-        } catch (ArithmeticException e) {
-            // 반올림이 필요한 금액은 그대로 거부합니다.
-            throw new InvalidOrderRequestException(
-                    "주문 금액은 소수 둘째 자리까지 표현할 수 있어야 합니다.",
-                    e
-            );
-        }
+        BigDecimal normalizedAmount = normalizeAmount(amount);
 
         // 사용자 번호로 버킷을 계산하고 샤드 상태를 검사합니다.
         ShardRoute route = shardRouter.route(userId);
@@ -101,10 +77,48 @@ public class OrderService {
         );
     }
 
+    public Order updateAmount(long userId, UUID orderId, BigDecimal amount) {
+        validateUserId(userId);
+        BigDecimal normalizedAmount = normalizeAmount(amount);
+
+        ShardRoute route = shardRouter.route(userId);
+
+        return orderRepository.updateAmount(
+                route.jdbcTemplate(),
+                orderId,
+                userId,
+                route.mapping().bucketId(),
+                normalizedAmount
+        ).orElseThrow(OrderNotFoundException::new);
+    }
+
     private static void validateUserId(long userId) {
         if (userId <= 0) {
             throw new InvalidOrderRequestException(
                     "userId는 1 이상이어야 합니다."
+            );
+        }
+    }
+
+    // 주문 생성과 금액 수정에 같은 금액 규칙을 적용합니다.
+    private static BigDecimal normalizeAmount(BigDecimal amount) {
+        if (amount == null) {
+            throw new InvalidOrderRequestException("주문 금액은 필수입니다.");
+        }
+
+        if (amount.signum() < 0 || amount.compareTo(MAX_AMOUNT) > 0) {
+            throw new InvalidOrderRequestException(
+                    "주문 금액은 0 이상 9999999999.99 이하여야 합니다."
+            );
+        }
+
+        try {
+            // 값을 반올림하지 않고 소수 둘째 자리까지 표현합니다.
+            return amount.setScale(2, RoundingMode.UNNECESSARY);
+        } catch (ArithmeticException e) {
+            throw new InvalidOrderRequestException(
+                    "주문 금액은 소수 둘째 자리까지 표현할 수 있어야 합니다.",
+                    e
             );
         }
     }

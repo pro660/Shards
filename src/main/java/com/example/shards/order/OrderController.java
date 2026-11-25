@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -58,5 +59,15 @@ public class OrderController {
         // 조회가 성공했다면 목록이 비어 있어도 200을 반환합니다.
         List<Order> orders = orderService.findByUserId(userId);
         return ResponseEntity.ok(orders);
+    }
+
+    @PatchMapping("/{orderId}/amount")
+    public ResponseEntity<Order> updateAmount(
+            @PathVariable("orderId") UUID orderId,
+            @RequestParam("userId") long userId,
+            @RequestBody UpdateOrderAmountRequest request
+    ) {
+        Order order = orderService.updateAmount(userId, orderId, request.amount());
+        return ResponseEntity.ok(order);
     }
 }

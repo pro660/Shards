@@ -127,4 +127,42 @@ public class OrderRepository {
                 bucketId
         );
     }
+
+    public Optional<Order> updateAmount(
+            JdbcTemplate shardJdbcTemplate,
+            UUID orderId,
+            long userId,
+            int bucketId,
+            BigDecimal amount
+    ) {
+        // 수정 대상 확인과 금액 변경을 한 SQL 문에서 처리합니다.
+        String sql = """
+                UPDATE orders
+                SET amount = ?,
+                    updated_at = statement_timestamp()
+                WHERE order_id = ?
+                  AND user_id = ?
+                  AND bucket_id = ?
+                RETURNING
+                    order_id,
+                    user_id,
+                    bucket_id,
+                    amount,
+                    status,
+                    created_at,
+                    updated_at
+                """;
+
+        // 조건에 맞는 행이 없다면 빈 Optional을 반환합니다.
+        return DataAccessUtils.optionalResult(
+                shardJdbcTemplate.query(
+                        sql,
+                        ORDER_ROW_MAPPER,
+                        amount,
+                        orderId,
+                        userId,
+                        bucketId
+                )
+        );
+    }
 }
