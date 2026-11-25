@@ -203,4 +203,22 @@ public class OrderRepository {
                 )
         );
     }
+
+    public boolean deleteById(
+            JdbcTemplate shardJdbcTemplate,
+            UUID orderId,
+            long userId,
+            int bucketId
+    ) {
+        // 같은 샤드에 있는 다른 사용자의 주문을 건드리지 않도록 조건을 묶습니다.
+        String sql = """
+                DELETE FROM orders
+                WHERE order_id = ?
+                  AND user_id = ?
+                  AND bucket_id = ?
+                """;
+
+        // 주문 번호가 기본 키이므로 삭제되는 행은 최대 한 건입니다.
+        return shardJdbcTemplate.update(sql, orderId, userId, bucketId) == 1;
+    }
 }
