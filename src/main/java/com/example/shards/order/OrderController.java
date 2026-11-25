@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -79,5 +80,14 @@ public class OrderController {
     ) {
         Order order = orderService.updateStatus(userId, orderId, request.status());
         return ResponseEntity.ok(order);
+    }
+
+    @DeleteMapping("/{orderId}")
+    public ResponseEntity<Void> deleteById(
+            @PathVariable("orderId") UUID orderId,
+            @RequestParam("userId") long userId
+    ) {
+        orderService.deleteById(userId, orderId);
+        return ResponseEntity.noContent().build();
     }
 }
