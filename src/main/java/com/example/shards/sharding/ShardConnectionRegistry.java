@@ -1,6 +1,8 @@
 package com.example.shards.sharding;
 
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import javax.sql.DataSource;
 
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -18,17 +20,19 @@ public class ShardConnectionRegistry {
             @Qualifier("shardA") DataSource shardADataSource,
 
             // 앞에서 shardB 표시를 붙인 연결 풀을 받습니다.
-            @Qualifier("shardB") DataSource shardBDataSource
-    ) {
-        // 각각의 연결 풀을 사용하는 SQL 실행 도구를 만듭니다.
-        JdbcTemplate shardA = new JdbcTemplate(shardADataSource);
-        JdbcTemplate shardB = new JdbcTemplate(shardBDataSource);
+            @Qualifier("shardB") DataSource shardBDataSource,
 
+            // C 프로필을 켠 경우에만 연결 풀이 전달됩니다.
+            @Qualifier("shardC") Optional<DataSource> shardCDataSource
+    ) {
         // 키 이름은 메타 DB의 connection_key 값과 같아야 합니다.
-        this.jdbcTemplates = Map.of(
-                "shardA", shardA,
-                "shardB", shardB
+        Map<String, JdbcTemplate> templates = new HashMap<>();
+        templates.put("shardA", new JdbcTemplate(shardADataSource));
+        templates.put("shardB", new JdbcTemplate(shardBDataSource));
+        shardCDataSource.ifPresent(dataSource ->
+                templates.put("shardC", new JdbcTemplate(dataSource))
         );
+        this.jdbcTemplates = Map.copyOf(templates);
     }
 
     // 연결 키에 맞는 SQL 실행 도구를 반환합니다.

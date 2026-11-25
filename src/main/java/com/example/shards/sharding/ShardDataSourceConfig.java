@@ -5,8 +5,9 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 
-// 샤드 A와 B에 사용할 DB 연결 풀을 등록합니다.
+// 샤드별 DB 연결 풀을 등록합니다.
 @Configuration
 public class ShardDataSourceConfig {
 
@@ -26,6 +27,15 @@ public class ShardDataSourceConfig {
     @Bean(defaultCandidate = false, destroyMethod = "close")
     @ConfigurationProperties("app.datasource.shard-b")
     public HikariDataSource shardBDataSource() {
+        return new HikariDataSource();
+    }
+
+    // C를 사용하는 환경에서만 연결 풀을 등록합니다.
+    @Profile("shard-c")
+    @Qualifier("shardC")
+    @Bean(defaultCandidate = false, destroyMethod = "close")
+    @ConfigurationProperties("app.datasource.shard-c")
+    public HikariDataSource shardCDataSource() {
         return new HikariDataSource();
     }
 }
