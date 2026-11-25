@@ -15,6 +15,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 // 실제 Spring 객체와 PostgreSQL을 사용하는 통합 테스트입니다.
 @SpringBootTest
@@ -91,6 +92,22 @@ class OrderRepositoryIntegrationTest {
             assertEquals("CREATED", order.status());
             assertNotNull(order.createdAt());
             assertNotNull(order.updatedAt());
+            // 저장 결과와 다시 조회한 주문의 모든 값이 일치해야 합니다.
+            Order foundOrder = orderRepository.findById(
+                    jdbcTemplate, orderId, userId, bucketId
+            ).orElseThrow();
+
+            assertEquals(order, foundOrder);
+
+            // 같은 UUID라도 사용자 번호가 다르면 조회되지 않아야 합니다.
+            assertTrue(orderRepository.findById(
+                    jdbcTemplate, orderId, userId + 1, bucketId
+            ).isEmpty());
+
+            // 같은 UUID와 사용자 번호라도 버킷이 다르면 조회되지 않아야 합니다.
+            assertTrue(orderRepository.findById(
+                    jdbcTemplate, orderId, userId, bucketId + 1
+            ).isEmpty());
 
             // 같은 트랜잭션 안에서는 저장한 주문이 조회돼야 합니다.
             Long count = jdbcTemplate.queryForObject(
