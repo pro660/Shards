@@ -39,6 +39,8 @@
 
 로컬 실험에서는 프로젝트 루트의 `.env`에 `SHARD_C_DB_NAME`, `SHARD_C_DB_USER`, `SHARD_C_DB_PASSWORD`를 추가한 뒤 `docker compose -f compose.shard-c.yaml up -d --wait`로 C를 시작한다. 접속 주소는 `127.0.0.1:15435`이고, 새 볼륨의 최초 실행 시 `db/005-create-orders.sql`로 주문 테이블을 생성한다. 버킷 소유권은 재배치 단계에서 전환한다.
 
+Spring Boot에서 C를 연결하려면 `./gradlew bootRun --args="--spring.profiles.active=shard-c"`를 실행한다. Windows PowerShell에서는 `./gradlew` 대신 `.\gradlew.bat`을 사용한다. 이 프로필은 `shardC` 연결 키를 등록하고, 다른 장비의 C를 사용할 때는 `SHARD_C_DB_HOST`와 `SHARD_C_DB_PORT`로 접속 주소를 지정할 수 있다. 실제 연결 테스트는 `RUN_SHARD_C_TEST=true` 환경 변수로 켜는 `ShardCConnectionIntegrationTest`에서 수행한다.
+
 **A·B는 같은 하드웨어를 공유한다. C는 복제본이나 대기용 백업 DB가 아니다.** 이동이 끝난 버킷은 C가 담당하고, A 또는 B의 이전 복사본은 검증 후 정리한다. C가 중단되면 C 담당 버킷을 자동으로 A·B에서 처리할 수 있다고 가정하지 않는다.
 
 애플리케이션과 메타DB도 내 PC에 있으므로 이 PC가 꺼지면 전체 서비스에 영향이 생긴다. 이번 구조는 자동 장애 전환이나 고가용성 구성이 아니다.
