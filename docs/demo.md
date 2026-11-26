@@ -132,6 +132,53 @@ npm run dev
 
    사용자 3과 10의 두 결과 모두 `verified / shardC`이고, 사용자 101의 결과는 `verified / shardB`다. 버킷 번호와 주문 UUID는 그대로이고 버킷 05의 담당 DB가 바뀌었다. 이후 같은 환경에서 A → C를 다시 시연하려면 먼저 화면에서 05의 현재 소유자를 확인한다. 이미 C라면 정상 재배치 절차로 05를 C → A로 돌려보낸 다음 새 작업을 등록할 수 있다. 각 전환 때 버전이 1씩 오른다.
 
+## 브라우저에서 주문 생성과 SQL 조회
+
+**Create order**에 사용자 ID와 금액을 입력하고 주문을 생성한다. 사용자 3과 10이면 버킷 `05`, 사용자 101이면 `10`이 응답에 표시된다. 저장할 샤드는 Spring이 현재 버킷 매핑을 조회해 선택한다.
+
+1. 읽기 토큰으로 **Load topology**를 누르고 **SQL terminal**에서 **Metadata**를 선택한다. 버킷 매핑을 먼저 확인한다.
+
+   ```sql
+   SELECT bucket_id, shard_id, state, version
+   FROM bucket_mapping
+   WHERE bucket_id = 5;
+   ```
+
+2. A나 C로 DB를 바꾸고 다음 쿼리를 각각 실행한다. 정리 완료 전후의 결과를 비교할 수 있다.
+
+   ```sql
+   SELECT order_id, user_id, bucket_id, amount, status
+   FROM orders
+   WHERE bucket_id = 5
+   ORDER BY created_at DESC
+   LIMIT 20;
+   ```
+
+3. 버킷 05에 몇 건이 실제로 있는지 보려면 각 샤드에서 `SELECT COUNT(*) AS bucket_orders FROM orders WHERE bucket_id = 5;`를 실행한다. 복사 직후에는 요청을 담당하는 샤드와 별개로 두 DB에 행이 보일 수 있다.
+
+메타 DB와 실제 샤드에서는 한 번에 한 개의 조회문을 실행한다. 한 테이블의 열 목록, `*`, `COUNT(*)`, `WHERE` 비교 조건 및 `AND`, `ORDER BY`, `LIMIT 1~100`을 지원한다. 실제 주문은 **Create order**에서 추가해 현재 버킷 소유자에게 보내도록 한다.
+
+### SQL Lab에서 PostgreSQL 스크립트 실행
+
+프로젝트 루트의 PowerShell에서 아래 명령을 한 번 실행한다. 사용 중인 Spring Boot가 있으면 종료 후 다시 시작한다.
+
+```powershell
+.\scripts\Start-SqlLab.ps1
+.\gradlew.bat bootRun
+```
+
+**SQL terminal**의 DB 메뉴에서 **SQL Lab**을 선택하고 쓰기 토큰을 입력한다. 초기 화면에 쓰기 토큰으로 로그인했다면 해당 토큰을 그대로 사용한다. **Load example**을 누르면 아래와 같은 다중 구문 예제가 준비된다.
+
+```sql
+CREATE TABLE IF NOT EXISTS demo_orders (id integer PRIMARY KEY, amount numeric);
+INSERT INTO demo_orders VALUES (1, 15000) ON CONFLICT (id) DO NOTHING;
+SELECT count(*) AS orders, sum(amount) AS total FROM demo_orders;
+```
+
+SQL Lab은 별도 PostgreSQL 컨테이너에서 낮은 권한으로 실행된다. `JOIN`, `WITH`, 집계, `CREATE TABLE`, `INSERT`, `UPDATE`, `DELETE`와 여러 문장을 PostgreSQL이 직접 처리한다. 관리자 권한이 필요한 명령은 PostgreSQL이 거절한다. 터미널은 SQL을 입력받으며 `psql` 전용 백슬래시 명령은 사용할 수 없다. 연결은 실행마다 새로 열리므로 `BEGIN`부터 `COMMIT`까지 한 번에 제출한다. 테이블과 커밋한 데이터는 Lab 컨테이너를 중단하기 전까지 유지된다.
+
+**Enter**는 실행, **Shift+Enter**는 줄바꿈, **↑/↓**는 현재 DB의 입력 이력이다. 결과 표는 최대 100행씩 표시하며, 최대 8개 결과를 보여준다.
+
 ## 백업과 장애 대응
 
 6. **정상 백업과 복원을 시연한다.** 모든 DB가 실행 중이고 미완료 작업이 없는 시점에 메타·A·B·C를 한 세트로 백업한다. 외장하드 역할은 로컬 폴더가 맡는다. 복원 명령은 각 서버에 고유 이름의 새 DB를 생성하므로 해당 계정에 `CREATEDB` 권한이 필요하다. 매핑·건수·주문 내용의 해시를 대조한 결과가 `verified-restore_*.json`에 기록된다.

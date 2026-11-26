@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { MigrationPanel } from './MigrationPanel';
+import { CreateOrderPanel } from './OrderWorkbench';
+import { SqlTerminal } from './SqlTerminal';
 import { BUCKET_COUNT, fetchTopology, TopologyError } from './topology';
 import type { Topology } from './topology';
 
@@ -183,7 +185,7 @@ export function App() {
       <main className="shell dashboard">
         <div className="page-heading">
           <div>
-            <h1>Shard topology</h1>
+            <h1>데이터베이스(캡스톤 디자인)</h1>
             <p>PostgreSQL shard status and bucket ownership.</p>
           </div>
           {snapshot && (
@@ -239,6 +241,9 @@ export function App() {
         {snapshot && <MigrationPanel topology={snapshot.topology} readToken={snapshot.readToken}
                                     topologyFresh={!pending && !error}
                                     refreshTopology={() => void load(snapshot.readToken)} />}
+
+        <CreateOrderPanel />
+        <SqlTerminal key={snapshot ? 'connected' : 'disconnected'} readToken={snapshot?.readToken} />
 
         <footer className="source"><span>GET</span> /admin/migrations/topology</footer>
       </main>

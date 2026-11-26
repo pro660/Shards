@@ -89,6 +89,10 @@ npm run dev
 
 **Bucket migration**에서 버킷과 도착 샤드를 고르고, `APP_ADMIN_WRITE_TOKEN`으로 작업을 등록한다. 등록 후 **Advance one step**으로 한 단계 또는 배치씩 진행한다. **Cancel pending job**은 복사를 시작하기 전에 사용할 수 있다. 화면을 다시 열면 조회 토큰으로 미완료 작업을 찾아 이어간다. 전체 확인 순서는 [브라우저 재배치](docs/demo.md#브라우저-재배치)를 참고한다.
 
+**Create order**에서 사용자 ID와 금액을 입력하면 서버가 해시와 현재 매핑을 바탕으로 저장할 샤드를 선택한다. 응답에 표시된 주문 UUID로 **SQL terminal**에서 실제 행을 찾을 수 있다. 터미널은 조회 토큰으로 열고 메타·A·B·C 중 조회할 DB를 골라 사용한다. [브라우저에서 주문 생성 및 SQL 조회](docs/demo.md#브라우저에서-주문-생성과-sql-조회)
+
+`JOIN`, `WITH`, DDL·DML과 다중 SQL을 연습하려면 `.\scripts\Start-SqlLab.ps1`을 실행하고 Spring을 재시작한다. 터미널의 **SQL Lab**을 선택한 뒤 쓰기 토큰으로 실행한다. 실습 DB는 실제 주문 DB와 분리되어 있고 컨테이너를 중단하면 초기화된다. [SQL Lab 실행과 예제](docs/demo.md#sql-lab에서-postgresql-스크립트-실행)
+
 실행 시 사용하는 설정 원본은 `src/main/resources/`에 있다. 로컬 자격 증명이 있는 `.env`·`.local/`과 IDE·빌드 생성물은 Git에서 제외한다.
 
 ## 시연에서 확인할 수 있는 결과
