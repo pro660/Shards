@@ -231,7 +231,7 @@ export function App() {
           {error && <p id="topology-error" className="error" role="alert">{error}</p>}
         </div>
 
-        <div className="topology-layout" aria-busy={pending}>
+        <div className="topology-layout" aria-busy={pending} data-loaded={snapshot ? 'true' : undefined}>
           <BucketOwners topology={snapshot?.topology} />
           <ShardStatus topology={snapshot?.topology} />
         </div>
