@@ -1,6 +1,6 @@
 # 백엔드 실습 가이드
 
-41~64회차의 코드, SQL, 실행 절차를 정리한다. 명령은 프로젝트 루트의 Windows PowerShell에서 실행한다. 로컬 재배치와 장애 재현은 초기 A·B 매핑과 가상 주문을 사용하는 개발용 DB에서 진행한다.
+41~64회차의 코드, SQL, 실행 절차를 정리한다. 명령은 프로젝트 루트의 Windows PowerShell에서 실행한다. 이 문서의 첫 재배치 예시는 초기 A·B 매핑과 사용자 1로 시작한다. 작업 7을 마친 개발 DB에서 발표할 때는 사용자 3·10과 버킷 05를 사용한다. [현재 시연 순서](demo.md)
 
 ## 41~50회차 재배치
 
@@ -21,7 +21,7 @@
 
 ### 로컬에서 한 버킷 이동
 
-1. 메타 DB에 `001~004`와 `007`, A·B에 `005`가 적용된 개발 환경을 준비한다. C의 초기작업은 [기획서의 로컬 C 설명](project-plan.md#3-하드웨어와-시스템-구성)을 따른다.
+1. 새 볼륨은 Compose가 메타 DB에 `001~004`·`007`, A·B·C에 `005`·`009`를 적용한다. 아래 인덱스 명령은 기존 개발용 볼륨에서도 반복 실행할 수 있다. [현재 환경의 시연 순서](demo.md)
 
    ```powershell
    docker compose up -d --wait meta-db shard-a shard-b
@@ -118,7 +118,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Backup failed' }
 python -B scripts/shards_ops.py restore --set $setPath
 ```
 
-완료 세트에는 네 파일과 `manifest.json`이 있고, 복원 검증 후에는 `verified-restore_*.json`이 백업 루트에 나타난다. 복원은 고유한 `restore_...` DB 이름을 생성한다. 기본 연결 계정에 `CREATEDB` 권한이 필요하다. 별도 테스트용 PostgreSQL 서버·볼륨을 사용하려면 `RESTORE_META_DB_HOST`, `RESTORE_SHARD_C_DB_PORT`와 같은 `RESTORE_` 접두 설정으로 각 대상 호스트·포트·계정을 재지정한다. 앱에서 복원 환경의 CRUD를 시험할 때는 별도 PowerShell 프로세스에서 DB 이름 및 접속 정보를 복원 보고서에 맞춘다. A·B·메타 앱 접속 주소는 그 실습용으로 별도 설정한다. 역할과 권한은 서버에서 미리 준비한다.
+완료 세트에는 덤프 네 개와 `manifest.json`이 있고, 복원 검증 후에는 `verified-restore_*.json`이 백업 루트에 나타난다. 복원은 고유한 `restore_...` DB 이름을 생성한다. 기본 연결 계정에 `CREATEDB` 권한이 필요하다. 별도 테스트용 PostgreSQL 서버·볼륨을 사용하려면 `RESTORE_META_DB_HOST`, `RESTORE_SHARD_C_DB_PORT`와 같은 `RESTORE_` 접두 설정으로 각 복원 대상의 호스트·포트·계정을 지정한다. 복원 DB로 앱을 실행할 때는 별도 PowerShell에서 `META_DB`, `SHARD_A_DB`, `SHARD_B_DB`, `SHARD_C_DB` 각각의 `_NAME`에 복원 보고서의 이름을, `_HOST`·`_PORT`에는 해당 주소를 설정한다. 역할과 권한은 서버에서 미리 준비한다.
 
 `backup`이 중단되면 해당 세트는 `.incomplete-` 폴더에 남는다. 동시 주문 쓰기는 백업 잠금을 얻는 동안 `503`을 받는다. 직접 SQL 쓰기나 스키마 변경도 백업 구간 동안 중지해야 세트 전체가 같은 상태를 표현한다.
 
@@ -154,19 +154,19 @@ ssh -N -o ExitOnForwardFailure=yes -L 127.0.0.1:25435:127.0.0.1:15435 user@shard
 ### 정확성과 성능을 기록하는 명령
 
 ```powershell
-$labRoot = Join-Path $env:LOCALAPPDATA 'shards-lab'
+# 이 문서의 사용자 1·버킷 03 예시를 완료한 직후 실행합니다.
 python -B scripts/shards_experiment.py verify-order --user 1 --bucket 3 --owner shardC --order-id $testOrder.orderId
-python -B scripts/shards_experiment.py measure --label before --users 1 101 --samples 100 --workers 2 --seed 42 --output (Join-Path $labRoot 'before.json')
 ```
 
-최초 측정은 이동 전 상태에서 하고, `COPYING`과 `COMPLETED` 시점에도 같은 파라미터로 실행하면서 파일명과 `--label`만 바꾼다. 환경을 비교할 때 요청 크기·데이터 수·반복 횟수·장비 CPU와 네트워크 상태를 같이 기록한다. 사용자 1의 버킷을 옮기는 실험이라면 이동 전에는 `--owner shardA`, 완료 후에는 `--owner shardC`로 확인한다. 장애 실험에서는 C 또는 터널을 중단하고, C 소유 버킷의 주문 HTTP 상태와 전체 목록·집계 응답을 확인한다. C를 다시 연결한 뒤 같은 UUID로 조회하고, 미완료 작업이 있다면 같은 ID로 재개한다.
+주문 데이터를 먼저 준비하고 같은 목록으로 이동 전·복사 중·완료 후를 측정한다. `by_user`에는 사용자별 성공·오류와 지연 시간이 기록된다. 현재 시연은 버킷 05의 사용자 3과 버킷 10의 사용자 101을 사용한다. 각 구간의 실행 횟수, 시드, 결과 해석은 [성능 측정 문서](performance.md)를 따른다. 장애 실험은 C를 다시 연결한 뒤 같은 주문 번호로 조회하고, 미완료 작업이 있다면 같은 작업 번호로 재개한다.
 
 ### 회귀 테스트
 
 ```powershell
-.\gradlew.bat test --tests "*MigrationRunnerTest" --tests "*AdminAccessTest"
-.\gradlew.bat test --tests "*MigrationJobServiceIntegrationTest" --tests "*MigrationJobRepositoryIntegrationTest" --tests "*OrderCrudIntegrationTest"
+$env:SPRING_PROFILES_ACTIVE = 'shard-c'
+$env:RUN_SHARD_C_TEST = 'true'
+.\gradlew.bat test --rerun
 python -B -m unittest discover -s scripts -p test_shards_ops.py
 ```
 
-41~64회차의 실제 완료 증거에는 로컬 전체 재배치, 덤프·복원 성공, 별도 장비 측정 및 장애 복구 결과가 포함된다. 소스 코드와 실험 명령을 준비한 뒤 각각의 DB와 장비에서 이를 수행해 기록한다.
+초기 배치와 버킷 03·05를 C로 이동한 배치에서 Java 테스트 64개씩을 통과했다. 로컬 재배치·장애·복원 결과는 시연 기록에, 같은 주문으로 측정한 지연 시간과 처리량은 성능 문서에 있다. 별도 장비의 네트워크와 성능은 해당 장비에서 추가 측정한다. [로컬 검증 결과](demo.md#로컬-검증-결과) · [성능 측정 결과](performance.md)

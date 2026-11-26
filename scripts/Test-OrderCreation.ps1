@@ -4,7 +4,7 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-# 실행하면 실제 주문 두 건이 추가됩니다. 초기 버킷 매핑 기준입니다.
+# 실행하면 주문 두 건이 추가됩니다. 재배치 후에도 사용자별 버킷 번호는 같습니다.
 $orderTestCases = @(
     @{ UserId = 1; Amount = [decimal]12000; ExpectedBucket = 3 },
     @{ UserId = 101; Amount = [decimal]25000; ExpectedBucket = 10 }
