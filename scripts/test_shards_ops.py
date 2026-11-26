@@ -1,10 +1,12 @@
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch
 
 from pg_ops import OperationError, write_json
 from shards_backup import FILES, HASH_RULE, check_set, fingerprint
-from shards_experiment import percentile
+from shards_experiment import measure, percentile
 from shards_incident import application_events
 
 
@@ -53,6 +55,21 @@ class IncidentLogTest(unittest.TestCase):
 
 
 class MeasurementTest(unittest.TestCase):
+    def test_separates_moved_user_results_from_control_user_and_includes_failures(self):
+        args = SimpleNamespace(url="http://127.0.0.1:8080", label="test", users=[3, 101],
+                               samples=12, workers=2, seed=42)
+        with patch("shards_experiment.get_status", side_effect=lambda _, user: (
+            ("503", 20.0) if user == 3 else ("200", 5.0)
+        )):
+            report = measure(args)
+        moved, control = report["by_user"]["3"], report["by_user"]["101"]
+        self.assertEqual(moved["error_rate"], 1)
+        self.assertIsNone(moved["successful_latency_ms"]["p50"])
+        self.assertEqual(control["error_rate"], 0)
+        self.assertEqual(control["latency_ms"]["p95"], 5.0)
+        self.assertEqual(report["statuses"], {"503": moved["requests"], "200": control["requests"]})
+        self.assertEqual(moved["requests"] + control["requests"], args.samples)
+
     def test_handles_empty_samples_and_nearest_rank(self):
         self.assertIsNone(percentile([], .95))
         self.assertEqual(percentile(list(range(1, 101)), .95), 95)

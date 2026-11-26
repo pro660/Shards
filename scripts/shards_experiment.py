@@ -7,15 +7,16 @@ import random
 import sys
 import time
 import uuid
-from collections import Counter
+from collections import Counter, defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
+from http.client import HTTPException
 from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlsplit
 from urllib.request import urlopen
 
-from pg_ops import OperationError, databases, outside_workspace, query, read_values, write_json
+from pg_ops import OperationError, databases, outside_workspace, query, read_values
 from shards_backup import CONNECTION_KEYS
 
 
@@ -36,7 +37,7 @@ def get_status(origin, user_id):
     except HTTPError as error:
         code = str(error.code)
         error.close()
-    except (URLError, TimeoutError, OSError):
+    except (HTTPException, URLError, OSError):
         code = "transport-error"
     return code, (time.perf_counter() - before) * 1000
 
@@ -45,6 +46,18 @@ def percentile(sorted_values, proportion):
     if not sorted_values:
         return None
     return round(sorted_values[math.ceil(len(sorted_values) * proportion) - 1], 2)
+
+
+def request_stats(measurements):
+    codes = Counter(status for status, _ in measurements)
+    all_ms = sorted(duration for _, duration in measurements)
+    success_ms = sorted(duration for status, duration in measurements if status == "200")
+    return {
+        "requests": len(measurements), "statuses": dict(codes),
+        "error_rate": round(1 - len(success_ms) / len(measurements), 5),
+        "latency_ms": {"p50": percentile(all_ms, .50), "p95": percentile(all_ms, .95)},
+        "successful_latency_ms": {"p50": percentile(success_ms, .50), "p95": percentile(success_ms, .95)},
+    }
 
 
 def measure(args):
@@ -60,16 +73,16 @@ def measure(args):
     with ThreadPoolExecutor(max_workers=args.workers) as executor:
         measurements = list(executor.map(lambda user_id: get_status(args.url.rstrip("/"), user_id), choices))
     elapsed = time.perf_counter() - started
-    codes = Counter(status for status, _ in measurements)
-    all_ms = sorted(duration for _, duration in measurements)
-    success_ms = sorted(duration for status, duration in measurements if status == "200")
+    # executor.map은 입력 순서를 유지하므로 이동 사용자와 대조 사용자의 결과를 나눌 수 있습니다.
+    by_user = defaultdict(list)
+    for user_id, result in zip(choices, measurements, strict=True):
+        by_user[user_id].append(result)
     return {
         "label": args.label, "measured_at": datetime.now(timezone.utc).isoformat(),
-        "seed": args.seed, "users": args.users, "requests": args.samples, "workers": args.workers,
+        "seed": args.seed, "users": args.users, "workers": args.workers,
         "seconds": round(elapsed, 3), "requests_per_second": round(args.samples / elapsed, 2),
-        "statuses": dict(codes), "error_rate": round(1 - len(success_ms) / args.samples, 5),
-        "latency_ms": {"p50": percentile(all_ms, .50), "p95": percentile(all_ms, .95)},
-        "successful_latency_ms": {"p50": percentile(success_ms, .50), "p95": percentile(success_ms, .95)},
+        **request_stats(measurements),
+        "by_user": {str(user): request_stats(results) for user, results in sorted(by_user.items())},
     }
 
 
