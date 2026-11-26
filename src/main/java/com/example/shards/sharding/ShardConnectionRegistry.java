@@ -6,6 +6,7 @@ import java.util.Optional;
 import javax.sql.DataSource;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
@@ -38,10 +39,9 @@ public class ShardConnectionRegistry {
     // 연결 키에 맞는 SQL 실행 도구를 반환합니다.
     public JdbcTemplate getJdbcTemplate(String connectionKey) {
 
-        // 등록되지 않은 연결을 임의의 다른 샤드로 보내지 않습니다.
-        if (connectionKey == null
-                || !jdbcTemplates.containsKey(connectionKey)) {
-            throw new IllegalArgumentException(
+        // 메타 DB에 있는 연결 키를 현재 프로필에서 해석할 수 없으면 해당 DB는 이용 불가입니다.
+        if (connectionKey == null || !jdbcTemplates.containsKey(connectionKey)) {
+            throw new DataAccessResourceFailureException(
                     "등록되지 않은 샤드 연결 키입니다: " + connectionKey
             );
         }

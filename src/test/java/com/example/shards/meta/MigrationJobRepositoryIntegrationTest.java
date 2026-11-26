@@ -28,13 +28,14 @@ class MigrationJobRepositoryIntegrationTest {
     private MigrationJob testJob;
 
     @BeforeEach
-    void insertPendingJobForShardC() {
+    void insertPendingJobForAnotherShard() {
         assertThat(migrationJobRepository.findUnfinished())
                 .as("run this test on a development database without an unfinished migration")
                 .isEmpty();
         mapping = bucketMappingRepository.findByBucketId(5);
         targetShardId = jdbcTemplate.queryForObject(
-                "SELECT shard_id FROM public.shards WHERE connection_key = 'shardC'", Integer.class
+                "SELECT shard_id FROM public.shards WHERE shard_id <> ? ORDER BY shard_id LIMIT 1",
+                Integer.class, mapping.shardId()
         );
         testJob = migrationJobRepository.tryInsert(
                 mapping.bucketId(), mapping.shardId(), targetShardId, mapping.version()

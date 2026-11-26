@@ -10,9 +10,15 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
+import com.example.shards.meta.BucketMapping;
+import com.example.shards.meta.BucketMappingRepository;
 import com.example.shards.sharding.ShardConnectionRegistry;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -39,20 +45,18 @@ class OrderCrudIntegrationTest {
     @Autowired
     private ShardConnectionRegistry shardConnectionRegistry;
 
-    private UUID testOrderId;
-    private long testUserId;
+    @Autowired
+    private BucketMappingRepository mappings;
 
-    @ParameterizedTest(name = "user {0}, bucket {1}, shard {2}")
-    @CsvSource({
-            "1, 3, shardA, shardB",
-            "101, 10, shardB, shardA"
-    })
-    void completesOrderLifecycle(
-            long userId,
-            int expectedBucketId,
-            String expectedShard,
-            String otherShard
-    ) throws IOException, InterruptedException {
+    // 소유자가 C로 바뀐 뒤에도 이번 테스트가 만든 UUID만 실제 저장 위치에서 정리합니다.
+    private final Map<String, Set<UUID>> fixtures = new LinkedHashMap<>();
+    private UUID testOrderId;
+
+    @ParameterizedTest(name = "user {0}, bucket {1}")
+    @CsvSource({"1, 3", "101, 10"})
+    void completesOrderLifecycle(long userId, int expectedBucketId) throws IOException, InterruptedException {
+        String expectedShard = ownerOf(expectedBucketId);
+        String otherShard = otherThan(expectedShard);
         try (HttpClient client = newClient()) {
             JsonNode created = createTestOrder(client, userId);
             assertThat(created.path("userId").longValue()).isEqualTo(userId);
@@ -160,22 +164,26 @@ class OrderCrudIntegrationTest {
         }
     }
 
-    @ParameterizedTest(name = "count includes user {0} only on {2}, excludes copy on {3}")
-    @CsvSource({
-            "1, 3, shardA, shardB",
-            "101, 10, shardB, shardA"
-    })
-    void countsOnlyOrdersOnTheirOwningShard(long userId, int bucketId, String owner, String otherShard)
+    @ParameterizedTest(name = "count includes only the owner of bucket {1} for user {0}")
+    @CsvSource({"1, 3", "101, 10"})
+    void countsOnlyOrdersOnTheirOwningShard(long userId, int bucketId)
             throws IOException, InterruptedException {
+        String owner = ownerOf(bucketId);
+        String otherShard = otherThan(owner);
         try (HttpClient client = newClient()) {
-            // 초기 매핑의 버킷 범위로 SQL을 직접 실행해 기준값을 구합니다.
-            long baseline = countRowsInRange("shardA", 0, 7) + countRowsInRange("shardB", 8, 15);
+            // 각 버킷의 소유 DB를 직접 조회해 API 집계와 독립적인 기준값을 만듭니다.
+            long baseline = 0;
+            for (BucketMapping mapping : mappings.findAll()) {
+                baseline += shardConnectionRegistry.getJdbcTemplate(mapping.connectionKey()).queryForObject(
+                        "SELECT COUNT(*) FROM orders WHERE bucket_id = ?", Long.class, mapping.bucketId());
+            }
             assertThat(readTotalCount(client)).isEqualTo(baseline);
 
             JsonNode original = createTestOrder(client, userId);
             assertThat(readTotalCount(client)).isEqualTo(baseline + 1);
 
             // 같은 주문을 다른 DB에 넣어 버킷 이동 중 두 행이 공존하는 상황을 만듭니다.
+            trackFixture(otherShard, testOrderId);
             shardConnectionRegistry.getJdbcTemplate(otherShard).update("""
                     INSERT INTO orders (order_id, user_id, bucket_id, amount, status, created_at, updated_at)
                     VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -207,11 +215,13 @@ class OrderCrudIntegrationTest {
         List<String> fixtureIds = List.of(newestId.toString(), higherId.toString(), lowerId.toString());
 
         try (HttpClient client = newClient()) {
-            insertOrderFixture("shardA", lowerId, 1L, 3, tiedAt);
-            insertOrderFixture("shardB", higherId, 101L, 10, tiedAt);
-            insertOrderFixture("shardA", newestId, 1L, 3, tiedAt.plusSeconds(1));
-            insertOrderFixture("shardB", lowerId, 1L, 3, tiedAt);
-            insertOrderFixture("shardB", copyOnlyId, 1L, 3, tiedAt.plusSeconds(2));
+            String owner = ownerOf(3);
+            String copy = otherThan(owner);
+            insertOrderFixture(owner, lowerId, 1L, 3, tiedAt);
+            insertOrderFixture(ownerOf(10), higherId, 101L, 10, tiedAt);
+            insertOrderFixture(owner, newestId, 1L, 3, tiedAt.plusSeconds(1));
+            insertOrderFixture(copy, lowerId, 1L, 3, tiedAt);
+            insertOrderFixture(copy, copyOnlyId, 1L, 3, tiedAt.plusSeconds(2));
 
             JsonNode orders = jsonMapper.readTree(send(client, "GET", "/orders/all", null, 200));
             assertThat(orders.isArray()).isTrue();
@@ -220,12 +230,6 @@ class OrderCrudIntegrationTest {
 
             assertThat(orderIds.stream().filter(fixtureIds::contains).toList()).containsExactlyElementsOf(fixtureIds);
             assertThat(orderIds).doesNotContain(copyOnlyId.toString());
-        } finally {
-            for (String shard : List.of("shardA", "shardB")) {
-                shardConnectionRegistry.getJdbcTemplate(shard).update(
-                        "DELETE FROM orders WHERE order_id IN (?, ?, ?, ?)", newestId, higherId, lowerId, copyOnlyId
-                );
-            }
         }
     }
 
@@ -238,10 +242,12 @@ class OrderCrudIntegrationTest {
         UUID insertedLater = UUID.randomUUID();
 
         try (HttpClient client = newClient()) {
-            insertOrderFixture("shardA", firstId, 1L, 3, tiedAt.plusSeconds(1));
-            insertOrderFixture("shardB", higherId, 101L, 10, tiedAt);
-            insertOrderFixture("shardA", lowerId, 1L, 3, tiedAt);
-            insertOrderFixture("shardB", lowerId, 1L, 3, tiedAt);
+            String owner = ownerOf(3);
+            String controlOwner = ownerOf(10);
+            insertOrderFixture(owner, firstId, 1L, 3, tiedAt.plusSeconds(1));
+            insertOrderFixture(controlOwner, higherId, 101L, 10, tiedAt);
+            insertOrderFixture(owner, lowerId, 1L, 3, tiedAt);
+            insertOrderFixture(otherThan(owner), lowerId, 1L, 3, tiedAt);
 
             JsonNode firstPage = jsonMapper.readTree(send(client, "GET", "/orders/all?size=2", null, 200));
             assertThat(firstPage.size()).isEqualTo(2);
@@ -250,19 +256,13 @@ class OrderCrudIntegrationTest {
             assertThat(lastOrder.required("orderId").stringValue()).isEqualTo(higherId.toString());
 
             // 페이지 사이에 최신 주문이 들어와도 다음 결과는 직전에 본 주문 바로 뒤에서 시작합니다.
-            insertOrderFixture("shardB", insertedLater, 101L, 10, tiedAt.plusSeconds(2));
+            insertOrderFixture(controlOwner, insertedLater, 101L, 10, tiedAt.plusSeconds(2));
             String cursorTime = URLEncoder.encode(lastOrder.required("createdAt").stringValue(), StandardCharsets.UTF_8);
             String path = "/orders/all?size=1&beforeCreatedAt=" + cursorTime
                     + "&beforeOrderId=" + lastOrder.required("orderId").stringValue();
             JsonNode nextPage = jsonMapper.readTree(send(client, "GET", path, null, 200));
             assertThat(nextPage.size()).isOne();
             assertThat(nextPage.get(0).required("orderId").stringValue()).isEqualTo(lowerId.toString());
-        } finally {
-            for (String shard : List.of("shardA", "shardB")) {
-                shardConnectionRegistry.getJdbcTemplate(shard).update(
-                        "DELETE FROM orders WHERE order_id IN (?, ?, ?, ?)", firstId, higherId, lowerId, insertedLater
-                );
-            }
         }
     }
 
@@ -277,17 +277,25 @@ class OrderCrudIntegrationTest {
     }
 
     @AfterEach
-    void removeTestOrderIfPresent() {
-        if (testOrderId == null) {
-            return;
+    void removeFixtures() {
+        for (var entry : fixtures.entrySet()) {
+            var shard = shardConnectionRegistry.getJdbcTemplate(entry.getKey());
+            for (UUID id : entry.getValue()) {
+                shard.update("DELETE FROM orders WHERE order_id = ?", id);
+            }
         }
+    }
 
-        // 검사가 중간에 실패해도 이번 실행에서 받은 주문 UUID만 정리합니다.
-        for (String shard : List.of("shardA", "shardB")) {
-            shardConnectionRegistry.getJdbcTemplate(shard).update(
-                    "DELETE FROM orders WHERE order_id = ? AND user_id = ?", testOrderId, testUserId
-            );
-        }
+    private String ownerOf(int bucketId) {
+        return mappings.findByBucketId(bucketId).connectionKey();
+    }
+
+    private String otherThan(String owner) {
+        return "shardA".equals(owner) ? "shardB" : "shardA";
+    }
+
+    private void trackFixture(String shard, UUID id) {
+        fixtures.computeIfAbsent(shard, key -> new LinkedHashSet<>()).add(id);
     }
 
     private HttpClient newClient() {
@@ -297,8 +305,8 @@ class OrderCrudIntegrationTest {
     private JsonNode createTestOrder(HttpClient client, long userId) throws IOException, InterruptedException {
         String body = "{\"userId\":" + userId + ",\"amount\":15000.00}";
         JsonNode created = jsonMapper.readTree(send(client, "POST", "/orders", body, 201));
-        testUserId = userId;
         testOrderId = UUID.fromString(created.path("orderId").stringValue());
+        trackFixture(ownerOf(created.required("bucketId").intValue()), testOrderId);
         return created;
     }
 
@@ -309,16 +317,11 @@ class OrderCrudIntegrationTest {
     }
 
     private void insertOrderFixture(String shard, UUID orderId, long userId, int bucketId, OffsetDateTime createdAt) {
+        trackFixture(shard, orderId);
         shardConnectionRegistry.getJdbcTemplate(shard).update("""
                 INSERT INTO orders (order_id, user_id, bucket_id, amount, created_at, updated_at)
                 VALUES (?, ?, ?, 15000.00, ?, ?)
                 """, orderId, userId, bucketId, createdAt, createdAt);
-    }
-
-    private long countRowsInRange(String shard, int firstBucket, int lastBucket) {
-        return shardConnectionRegistry.getJdbcTemplate(shard).queryForObject(
-                "SELECT COUNT(*) FROM orders WHERE bucket_id BETWEEN ? AND ?", Long.class, firstBucket, lastBucket
-        );
     }
 
     private long readTotalCount(HttpClient client) throws IOException, InterruptedException {

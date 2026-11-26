@@ -150,11 +150,7 @@ public class MigrationRunner {
     private JdbcTemplate activeShard(int shardId) {
         String key = shards.findActiveConnectionKeyForShare(shardId)
                 .orElseThrow(() -> new IllegalStateException("재배치에 필요한 샤드가 ACTIVE 상태여야 합니다."));
-        try {
-            return connections.getJdbcTemplate(key);
-        } catch (IllegalArgumentException exception) {
-            throw new IllegalStateException("재배치에 필요한 샤드 연결 설정이 없습니다.", exception);
-        }
+        return connections.getJdbcTemplate(key);
     }
 
     private static void checkMapping(BucketMapping mapping, int owner, long version, String state) {

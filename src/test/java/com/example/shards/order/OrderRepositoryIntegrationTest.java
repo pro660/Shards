@@ -8,6 +8,7 @@ import javax.sql.DataSource;
 import com.example.shards.sharding.ShardConnectionRegistry;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
@@ -28,14 +29,20 @@ class OrderRepositoryIntegrationTest {
     @Autowired
     private ShardConnectionRegistry shardConnectionRegistry;
 
+    @Value("${SHARD_A_DB_NAME}")
+    private String shardADatabase;
+
+    @Value("${SHARD_B_DB_NAME}")
+    private String shardBDatabase;
+
     @Test
     void insertsOrderIntoShardAAndRollsBack() {
-        verifyInsertAndRollback("shardA", "shards_a", 1L, 3);
+        verifyInsertAndRollback("shardA", shardADatabase, 1L, 3);
     }
 
     @Test
     void insertsOrderIntoShardBAndRollsBack() {
-        verifyInsertAndRollback("shardB", "shards_b", 101L, 10);
+        verifyInsertAndRollback("shardB", shardBDatabase, 101L, 10);
     }
 
     @Test

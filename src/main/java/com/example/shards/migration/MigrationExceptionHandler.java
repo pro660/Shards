@@ -9,6 +9,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.CannotCreateTransactionException;
+import org.springframework.transaction.TransactionSystemException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
@@ -47,8 +49,8 @@ public class MigrationExceptionHandler {
         return ProblemDetail.forStatusAndDetail(HttpStatus.SERVICE_UNAVAILABLE, "다른 작업이 진행 중입니다.");
     }
 
-    @ExceptionHandler(DataAccessException.class)
-    public ProblemDetail databaseError(DataAccessException exception) {
+    @ExceptionHandler({DataAccessException.class, CannotCreateTransactionException.class, TransactionSystemException.class})
+    public ProblemDetail databaseError(RuntimeException exception) {
         log.warn("Migration database request failed ({})", exception.getClass().getSimpleName());
         return ProblemDetail.forStatusAndDetail(HttpStatus.SERVICE_UNAVAILABLE, "재배치에 필요한 DB 작업에 실패했습니다.");
     }

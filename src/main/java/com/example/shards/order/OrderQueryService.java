@@ -88,9 +88,8 @@ public class OrderQueryService {
     }
 
     private <T> T queryShard(String connectionKey, Function<JdbcTemplate, T> query) {
-        JdbcTemplate jdbcTemplate = shardConnectionRegistry.getJdbcTemplate(connectionKey);
         try {
-            return query.apply(jdbcTemplate);
+            return query.apply(shardConnectionRegistry.getJdbcTemplate(connectionKey));
         } catch (DataAccessResourceFailureException | TransientDataAccessResourceException exception) {
             // 앞에서 읽은 결과를 반환하지 않고 전체 요청을 실패 처리합니다.
             log.warn("Order query failed on shard {} ({})", connectionKey, exception.getClass().getSimpleName());
@@ -102,12 +101,15 @@ public class OrderQueryService {
         locks.allowReadAll();
         List<BucketMapping> mappings = bucketMappingRepository.findAll();
         if (mappings.size() != BucketHasher.BUCKET_COUNT) {
-            throw new IllegalStateException("전체 주문을 조회하려면 모든 버킷의 소유권이 필요합니다.");
+            throw new OrderQueryUnavailableException("전체 주문을 조회하려면 모든 버킷의 소유권이 필요합니다.");
         }
 
         // 집계와 목록 조회가 같은 소유권 규칙을 사용합니다.
         Map<String, List<Integer>> bucketsByShard = new LinkedHashMap<>();
         for (BucketMapping mapping : mappings) {
+            if (!"ACTIVE".equals(mapping.shardStatus())) {
+                throw new OrderQueryUnavailableException("소유 샤드가 비활성 상태입니다: " + mapping.shardName());
+            }
             bucketsByShard.computeIfAbsent(mapping.connectionKey(), key -> new ArrayList<>())
                     .add(mapping.bucketId());
         }

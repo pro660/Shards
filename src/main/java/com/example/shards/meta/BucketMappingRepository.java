@@ -3,6 +3,8 @@ package com.example.shards.meta;
 import java.util.List;
 import java.util.Optional;
 
+import com.example.shards.sharding.BucketHasher;
+import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.support.DataAccessUtils;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -48,17 +50,15 @@ public class BucketMappingRepository {
     public BucketMapping findByBucketId(int bucketId) {
 
         // DB에 접근하기 전에 잘못된 버킷 번호를 거부합니다.
-        if (bucketId < 0 || bucketId >= 16) {
+        if (bucketId < 0 || bucketId >= BucketHasher.BUCKET_COUNT) {
             throw new IllegalArgumentException(
                     "bucketId는 0 이상 15 이하여야 합니다."
             );
         }
 
-        return jdbcTemplate.queryForObject(
-                SELECT_MAPPINGS + "WHERE b.bucket_id = ?",
-                BUCKET_MAPPING_ROW_MAPPER,
-                bucketId
-        );
+        return DataAccessUtils.optionalResult(jdbcTemplate.query(
+                SELECT_MAPPINGS + "WHERE b.bucket_id = ?", BUCKET_MAPPING_ROW_MAPPER, bucketId
+        )).orElseThrow(() -> new DataAccessResourceFailureException("버킷 소유권을 찾을 수 없습니다: " + bucketId));
     }
 
     public List<BucketMapping> findAll() {

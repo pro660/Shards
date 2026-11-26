@@ -6,6 +6,8 @@ import org.springframework.dao.TransientDataAccessResourceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.transaction.CannotCreateTransactionException;
+import org.springframework.transaction.TransactionSystemException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -82,7 +84,8 @@ public class OrderExceptionHandler {
         return problem;
     }
 
-    @ExceptionHandler({DataAccessResourceFailureException.class, TransientDataAccessResourceException.class})
+    @ExceptionHandler({DataAccessResourceFailureException.class, TransientDataAccessResourceException.class,
+            CannotCreateTransactionException.class, TransactionSystemException.class})
     public ProblemDetail handleShardConnectionFailure() {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(
                 HttpStatus.SERVICE_UNAVAILABLE, "주문을 담당하는 DB에 접근할 수 없습니다."

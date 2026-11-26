@@ -15,10 +15,12 @@ import com.example.shards.sharding.BucketHasher;
 import com.example.shards.sharding.ShardConnectionRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.transaction.TransactionSystemException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -28,6 +30,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -42,13 +45,13 @@ class OrderQueryFailureTest {
     private final DataSource shardBDataSource = mock(DataSource.class);
     private final JdbcTemplate shardB = new JdbcTemplate(shardBDataSource);
     private final OrderRepository orderRepository = spy(new OrderRepository());
+    private final BucketMappingRepository mappings = mock(BucketMappingRepository.class);
+    private final ShardConnectionRegistry registry = mock(ShardConnectionRegistry.class);
     private final JsonMapper jsonMapper = JsonMapper.builder().build();
     private MockMvc mvc;
 
     @BeforeEach
     void setUp() {
-        BucketMappingRepository mappings = mock(BucketMappingRepository.class);
-        ShardConnectionRegistry registry = mock(ShardConnectionRegistry.class);
         List<BucketMapping> initialMappings = IntStream.range(0, BucketHasher.BUCKET_COUNT)
                 .mapToObj(bucket -> bucket < 8
                         ? new BucketMapping(bucket, 1, "A", "shardA", "NORMAL", 1L, "ACTIVE")
@@ -64,6 +67,40 @@ class OrderQueryFailureTest {
         mvc = MockMvcBuilders.standaloneSetup(new OrderController(mock(OrderService.class), service))
                 .setControllerAdvice(new OrderExceptionHandler())
                 .build();
+    }
+
+    @Test
+    void rejectsPartialTopologyBeforeCounting() throws Exception {
+        when(mappings.findAll()).thenReturn(List.of());
+        expectUnavailable("/orders/count");
+        verifyNoInteractions(orderRepository);
+    }
+
+    @Test
+    void refusesToReadAnInactiveOwnerEvenIfItsDatabaseCanConnect() throws Exception {
+        List<BucketMapping> owners = IntStream.range(0, BucketHasher.BUCKET_COUNT)
+                .mapToObj(id -> new BucketMapping(id, 2, "B", "shardB", "NORMAL", 1L, "INACTIVE")).toList();
+        when(mappings.findAll()).thenReturn(owners);
+        expectUnavailable("/orders/all");
+        verifyNoInteractions(orderRepository);
+    }
+
+    @Test
+    void reportsUnavailableWhenMetadataConnectionDropsDuringRollback() throws Exception {
+        when(mappings.findAll()).thenThrow(new TransactionSystemException(DRIVER_ERROR));
+        byte[] body = mvc.perform(get("/orders/count"))
+                .andExpect(status().isServiceUnavailable())
+                .andReturn().getResponse().getContentAsByteArray();
+        JsonNode problem = jsonMapper.readTree(body);
+        assertThat(problem.required("title").stringValue()).isEqualTo("Order database unavailable");
+        assertThat(problem.toString()).doesNotContain(DRIVER_ERROR);
+    }
+
+    @Test
+    void returnsUnavailableWhenAnOwnerConnectionIsMissing() throws Exception {
+        when(registry.getJdbcTemplate("shardA")).thenThrow(new DataAccessResourceFailureException("missing"));
+        expectUnavailable("/orders/count");
+        verifyNoInteractions(orderRepository);
     }
 
     @Test
