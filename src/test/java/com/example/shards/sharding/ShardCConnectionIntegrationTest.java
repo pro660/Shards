@@ -8,13 +8,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.test.context.ActiveProfiles;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 // C를 띄운 환경에서만 실제 JDBC 연결을 검사합니다.
 @EnabledIfEnvironmentVariable(named = "RUN_SHARD_C_TEST", matches = "true")
-@ActiveProfiles("shard-c")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 class ShardCConnectionIntegrationTest {
 

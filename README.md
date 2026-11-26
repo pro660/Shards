@@ -44,7 +44,7 @@ docker compose -f compose.shard-c.yaml up -d --wait
 새 볼륨은 첫 기동 시 스키마와 초기 매핑을 생성한다. 최초 시연에서는 네 DB 기동 후 메타 DB에서 A·B·C를 한 번 활성화하고, 아래 명령으로 Spring을 실행한다. 기존 볼륨에서는 저장된 매핑으로 시작한다. [샤드 활성화 SQL과 앱 로그 설정](docs/demo.md#첫-실행)
 
 ```powershell
-.\gradlew.bat bootRun --args="--spring.profiles.active=shard-c"
+.\gradlew.bat bootRun
 ```
 
 다른 터미널에서 확인한다.
@@ -56,7 +56,6 @@ Invoke-RestMethod http://127.0.0.1:8080/health
 응답 `{"status":"UP"}`는 Spring HTTP 서버가 요청을 받는다는 뜻이다. 샤드 가용성은 해당 샤드가 소유한 주문 조회로 확인한다. 빌드와 통합 테스트는 작업이 끝난 개발용 DB에서 실행한다.
 
 ```powershell
-$env:SPRING_PROFILES_ACTIVE = 'shard-c'
 $env:RUN_SHARD_C_TEST = 'true'
 .\gradlew.bat build --rerun-tasks
 python -B -m unittest discover -s scripts -p test_shards_ops.py
@@ -69,14 +68,14 @@ Gradle은 현재 매핑으로 테스트를 다시 실행하고 JAR를 만든다.
 1. 프로젝트를 열고 `build.gradle`을 Gradle 프로젝트로 연결한다.
 2. Project SDK와 Gradle JVM을 JDK 21로 설정한다.
 3. Gradle 배포는 Wrapper를 사용하고 동기화한다.
-4. 작업 디렉터리를 프로젝트 루트로 두고, 시연용 실행 구성의 활성 프로필을 `shard-c`로 지정하여 `ShardsProApplication.main()`을 실행한다.
+4. 작업 디렉터리를 프로젝트 루트로 두고 `ShardsProApplication.main()`을 실행한다. 활성 프로필을 비워 두면 기본 프로필 `shard-c`가 적용되어 A·B·C 연결 풀이 등록된다. 다른 프로필을 명시해서 실행할 때도 C를 사용하려면 활성 프로필 목록에 `shard-c`를 포함한다.
 
-8080이 사용 중이면 `bootRun --args="--spring.profiles.active=shard-c --server.port=8081"`로 실행할 수 있다.
+8080이 사용 중이면 `.\gradlew.bat bootRun --args="--server.port=8081"`로 실행할 수 있다.
 이 경우 확인 URL도 8081로 바꾼다.
 
 ## 샤드 현황 화면
 
-Spring Boot가 실행 중인 상태에서 새 PowerShell을 열고 프로젝트 루트에서 아래 명령을 실행한다. C가 버킷을 소유한 실습 환경에서는 C를 켜고 `shard-c` 프로필로 Spring Boot를 실행한다. Node.js 22.12 이상 또는 Vite가 지원하는 Node.js 20.19 이상이 필요하다.
+Spring Boot가 실행 중인 상태에서 새 PowerShell을 열고 프로젝트 루트에서 아래 명령을 실행한다. C가 버킷을 소유한 실습 환경에서는 C 컨테이너도 실행한다. Node.js 22.12 이상 또는 Vite가 지원하는 Node.js 20.19 이상이 필요하다.
 
 ```powershell
 cd frontend
@@ -86,7 +85,7 @@ npm run dev
 
 브라우저의 `http://127.0.0.1:5173`에서 Spring Boot에 설정한 `APP_ADMIN_READ_TOKEN` 값을 입력하고 **Load topology**를 누른다. 조회 토큰을 새로 추가했다면 Spring Boot를 재시작한다. Vite는 `/api/topology`를 로컬 Spring Boot의 `GET /admin/migrations/topology`로 전달한다. Spring Boot 포트가 8081이면 프론트엔드 실행 전에 `$env:SHARDS_BACKEND_ORIGIN = 'http://127.0.0.1:8081'`을 설정한다.
 
-화면의 `ACTIVE`·`INACTIVE`는 메타 DB에 등록된 상태다. C가 `ACTIVE`인데 C 소유 주문만 `503`이면 C 컨테이너 상태와 Spring의 활성 프로필 `shard-c`를 확인한다. `frontend`에서 `npm run build`를 실행하면 타입 검사와 배포용 빌드를 수행한다.
+화면의 `ACTIVE`·`INACTIVE`는 메타 DB에 등록된 상태다. C가 `ACTIVE`인데 C 소유 주문만 `503`이면 C 컨테이너 상태와 Spring 시작 로그에 기본 또는 활성 프로필로 `shard-c`가 표시되는지 확인한다. `frontend`에서 `npm run build`를 실행하면 타입 검사와 배포용 빌드를 수행한다.
 
 **Bucket migration**에서 버킷과 도착 샤드를 고르고, `APP_ADMIN_WRITE_TOKEN`으로 작업을 등록한다. 등록 후 **Advance one step**으로 한 단계 또는 배치씩 진행한다. **Cancel pending job**은 복사를 시작하기 전에 사용할 수 있다. 화면을 다시 열면 조회 토큰으로 미완료 작업을 찾아 이어간다. 전체 확인 순서는 [브라우저 재배치](docs/demo.md#브라우저-재배치)를 참고한다.
 

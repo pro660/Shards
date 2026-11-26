@@ -21,13 +21,13 @@ $metaDb = docker compose exec -T meta-db printenv POSTGRES_DB
 docker compose exec -T meta-db psql -X -U $metaUser -d $metaDb -v ON_ERROR_STOP=1 -c "UPDATE public.shards SET status = 'ACTIVE' WHERE connection_key IN ('shardA','shardB','shardC');"
 ```
 
-같은 터미널에서 앱 로그 경로를 지정하고 Spring을 실행한다. `shard-c` 프로필은 관리 화면과 주문 API가 C의 DB 연결을 사용할 수 있게 한다.
+같은 터미널에서 앱 로그 경로를 지정하고 Spring을 실행한다. 기본 프로필 `shard-c`는 관리 화면과 주문 API가 C의 DB 연결을 사용할 수 있게 한다.
 
 ```powershell
 $labRoot = Join-Path $env:LOCALAPPDATA 'shards-lab'
 New-Item -ItemType Directory -Path $labRoot -Force | Out-Null
 $env:LOGGING_FILE_NAME = Join-Path $labRoot 'application.log'
-.\gradlew.bat bootRun --args="--spring.profiles.active=shard-c"
+.\gradlew.bat bootRun
 ```
 
 **터미널 2**에서 React를 실행한다. 의존성을 처음 설치하거나 잠금 파일이 바뀐 경우 `npm ci`를 실행한다.

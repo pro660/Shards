@@ -51,7 +51,7 @@
    $labRoot = Join-Path $env:LOCALAPPDATA 'shards-lab'
    New-Item -ItemType Directory -Path $labRoot -Force | Out-Null
    $env:LOGGING_FILE_NAME = Join-Path $labRoot 'application.log'
-   .\gradlew.bat bootRun --args="--spring.profiles.active=shard-c"
+   .\gradlew.bat bootRun
    ```
 
 4. 별도 PowerShell에서 쓰기 토큰을 입력해 주문 한 건과 재배치 작업을 만든다. 초기 매핑에서 사용자 1은 A가 소유한 버킷 3에 속하고, 샤드 C의 번호는 3이다.
@@ -163,7 +163,6 @@ python -B scripts/shards_experiment.py verify-order --user 1 --bucket 3 --owner 
 ### 회귀 테스트
 
 ```powershell
-$env:SPRING_PROFILES_ACTIVE = 'shard-c'
 $env:RUN_SHARD_C_TEST = 'true'
 .\gradlew.bat test --rerun
 python -B -m unittest discover -s scripts -p test_shards_ops.py
