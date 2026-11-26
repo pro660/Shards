@@ -1,30 +1,34 @@
-# Docker name
 name: shards-study
 
-# Excution programs
-services:
-  # Metadata Service name
-  meta-db:
-    # Postgres Docker IMG
-    image: postgres:18
+# --wait는 초기화용 임시 서버가 끝나고 TCP로 접속할 수 있을 때 완료됩니다.
+x-postgres-healthcheck: &postgres-healthcheck
+  test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+  interval: 2s
+  timeout: 3s
+  retries: 15
 
-    # Deliver .env file to Postgres18
+services:
+  meta-db:
+    image: postgres:18
     environment:
       POSTGRES_DB: ${META_DB_NAME:?META_DB_NAME is required}
       POSTGRES_USER: ${META_DB_USER:?META_DB_USER is required}
       POSTGRES_PASSWORD: ${META_DB_PASSWORD:?META_DB_PASSWORD is required}
 
-    #Private Port
     ports:
-      - "127.0.0.1:15432:5432"
+      - "127.0.0.1:${META_DB_PORT:-15432}:5432"
 
-    # DB data is stored separate storage distinct from container(Volumes)
+    # PostgreSQL은 빈 볼륨의 첫 시작에서만 이 SQL을 파일명 순서대로 실행합니다.
     volumes:
       - meta_data:/var/lib/postgresql
+      - ./db/001-create-shards.sql:/docker-entrypoint-initdb.d/001-create-shards.sql:ro
+      - ./db/002-seed-shards.sql:/docker-entrypoint-initdb.d/002-seed-shards.sql:ro
+      - ./db/003-create-bucket-mapping.sql:/docker-entrypoint-initdb.d/003-create-bucket-mapping.sql:ro
+      - ./db/004-seed-bucket-mapping.sql:/docker-entrypoint-initdb.d/004-seed-bucket-mapping.sql:ro
+      - ./db/007-create-migration-jobs.sql:/docker-entrypoint-initdb.d/007-create-migration-jobs.sql:ro
+    healthcheck: *postgres-healthcheck
 
-  # Shard_A(Order data)
   shard-a:
-    # Postgres Docker IMG
     image: postgres:18
 
     environment:
@@ -33,10 +37,13 @@ services:
       POSTGRES_PASSWORD: ${SHARD_A_DB_PASSWORD:?SHARD_A_DB_PASSWORD is required}
 
     ports:
-      - "127.0.0.1:15433:5432"
+      - "127.0.0.1:${SHARD_A_DB_PORT:-15433}:5432"
 
     volumes:
       - shard_a_data:/var/lib/postgresql
+      - ./db/005-create-orders.sql:/docker-entrypoint-initdb.d/005-create-orders.sql:ro
+      - ./db/009-index-orders-by-bucket.sql:/docker-entrypoint-initdb.d/009-index-orders-by-bucket.sql:ro
+    healthcheck: *postgres-healthcheck
 
   shard-b:
     image: postgres:18
@@ -47,12 +54,14 @@ services:
       POSTGRES_PASSWORD: ${SHARD_B_DB_PASSWORD:?SHARD_B_DB_PASSWORD is required}
 
     ports:
-      - "127.0.0.1:15434:5432"
+      - "127.0.0.1:${SHARD_B_DB_PORT:-15434}:5432"
 
     volumes:
       - shard_b_data:/var/lib/postgresql
+      - ./db/005-create-orders.sql:/docker-entrypoint-initdb.d/005-create-orders.sql:ro
+      - ./db/009-index-orders-by-bucket.sql:/docker-entrypoint-initdb.d/009-index-orders-by-bucket.sql:ro
+    healthcheck: *postgres-healthcheck
 
-# Declare the storage
 volumes:
   meta_data:
   shard_a_data:

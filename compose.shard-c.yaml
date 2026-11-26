@@ -9,9 +9,9 @@ services:
       POSTGRES_USER: ${SHARD_C_DB_USER:?SHARD_C_DB_USER is required}
       POSTGRES_PASSWORD: ${SHARD_C_DB_PASSWORD:?SHARD_C_DB_PASSWORD is required}
 
-    # 내 PC의 15435번 포트를 컨테이너의 PostgreSQL 포트에 연결합니다.
+    # C가 실행되는 PC에서 접속할 포트입니다. 기본값은 15435입니다.
     ports:
-      - "127.0.0.1:15435:5432"
+      - "127.0.0.1:${SHARD_C_DB_PORT:-15435}:5432"
 
     volumes:
       - shard_c_data:/var/lib/postgresql
