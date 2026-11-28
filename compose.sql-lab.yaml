@@ -1,0 +1,30 @@
+name: shards-sql-lab
+
+services:
+  sql-lab:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: sql_lab
+      POSTGRES_PASSWORD_FILE: /run/secrets/sql_lab_admin
+      SQL_LAB_PASSWORD: ${SQL_LAB_PASSWORD:?Run scripts/Start-SqlLab.ps1 first}
+    secrets:
+      - sql_lab_admin
+    ports:
+      - "127.0.0.1:${SQL_LAB_PORT:-15436}:5432"
+    volumes:
+      - ./db/010-create-sql-lab.sql:/docker-entrypoint-initdb.d/010-create-sql-lab.sql:ro
+    # 실습 내용은 컨테이너를 중단하면 사라집니다. 프로젝트 DB의 볼륨은 공유하지 않습니다.
+    tmpfs:
+      - /var/lib/postgresql:size=384m
+    cpus: 1
+    mem_limit: 512m
+    command: ["postgres", "-c", "max_connections=12", "-c", "shared_buffers=32MB"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U sql_terminal -d sql_lab"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+secrets:
+  sql_lab_admin:
+    file: ./.local/sql-lab-admin
