@@ -88,6 +88,64 @@ class MigrationRunnerTest {
         verify(mappings, never()).switchOwner(job);
     }
 
+    // 테스트 1 출발 샤드 연결 실패 -> 진욱//
+    @Test
+    void stopsWhenSourceShardIsUnavailable() {
+        MigrationJob job = stubJob("PENDING");
+
+        when(mappings.findByBucketIdForShare(3))
+                .thenReturn(Optional.of(new BucketMapping(
+                        3, 1, "A", "shardA", "NORMAL", 1, "ACTIVE")));
+
+        when(orders.readBatch(source, 3, null, 1))
+                .thenThrow(new IllegalStateException("Source shard unavailable"));
+
+        assertThatThrownBy(() -> runner.advance(job.jobId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("Source shard unavailable");
+
+        verify(mappings, never()).beginMigration(job);
+        verify(jobs, never()).advance(job, "COPYING");
+    }
+
+    // 테스트 2 도착 샤드 연결 실패 -> 진욱//
+    @Test
+    void stopsWhenTargetShardIsUnavailable() {
+        MigrationJob job = stubJob("PENDING");
+
+        when(mappings.findByBucketIdForShare(3))
+                .thenReturn(Optional.of(new BucketMapping(
+                        3, 1, "A", "shardA", "NORMAL", 1, "ACTIVE")));
+
+        when(orders.readBatch(target, 3, null, 1))
+                .thenThrow(new IllegalStateException("Target shard unavailable"));
+
+        assertThatThrownBy(() -> runner.advance(job.jobId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("Target shard unavailable");
+
+        verify(mappings, never()).beginMigration(job);
+        verify(jobs, never()).advance(job, "COPYING");
+    }
+
+    // 테스트 3 복사할 데이터가 없을 때 도착 샤드 연결 실패 -> 진욱//
+    @Test
+    void stopsBeforeVerificationWhenTargetIsUnavailable() {
+        MigrationJob job = stubJob("COPYING");
+
+        when(orders.readBatch(source, 3, null, 100))
+                .thenReturn(List.of());
+
+        when(orders.readBatch(target, 3, null, 1))
+                .thenThrow(new IllegalStateException("Target shard unavailable"));
+
+        assertThatThrownBy(() -> runner.advance(job.jobId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("Target shard unavailable");
+
+        verify(jobs, never()).advance(job, "VERIFYING");
+    }
+
     private MigrationJob stubJob(String phase) {
         MigrationJob job = new MigrationJob(1, 3, 1, 3, 1, phase, null, 0, null, null, now, now, null);
         when(jobs.findByIdForUpdate(job.jobId())).thenReturn(Optional.of(job));
