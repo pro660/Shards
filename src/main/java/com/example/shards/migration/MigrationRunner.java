@@ -32,8 +32,7 @@ public class MigrationRunner {
 
     public MigrationRunner(
             MigrationJobRepository jobs, BucketMappingRepository mappings, ShardRepository shards,
-            ShardConnectionRegistry connections, BucketOrderRepository orders, OperationLocks locks
-    ) {
+            ShardConnectionRegistry connections, BucketOrderRepository orders, OperationLocks locks) {
         this.jobs = jobs;
         this.mappings = mappings;
         this.shards = shards;
@@ -61,7 +60,8 @@ public class MigrationRunner {
             checkMapping(mapping, job.sourceShardId(), job.sourceMappingVersion(), expectedState);
             JdbcTemplate target = activeShard(job.targetShardId());
             switch (job.phase()) {
-                case "PENDING" -> beginCopy(job, target);
+                case "PENDING" -> beginCopy(
+                        job, activeShard(job.sourceShardId()), target); // 1번 수정 -> 진욱//
                 case "COPYING" -> copyNextBatch(job, activeShard(job.sourceShardId()), target);
                 case "VERIFYING" -> {
                     verifyCopies(job.bucketId(), activeShard(job.sourceShardId()), target);
@@ -88,24 +88,31 @@ public class MigrationRunner {
         return jobs.findById(jobId).orElseThrow(MigrationJobNotFoundException::new);
     }
 
-    private void beginCopy(MigrationJob job, JdbcTemplate target) {
+    // 2번 수정 -> 진욱//
+    private void beginCopy(
+            MigrationJob job, JdbcTemplate source, JdbcTemplate target) {
+
         locks.drainWrites(job.bucketId());
-        // 쓰기 제한을 적용하기 전에 목적지의 주문 테이블을 읽을 수 있는지 확인합니다.
+
+        // 출발 및 도착 샤드의 주문 테이블 접근 가능 여부를 확인합니다.
+        orders.readBatch(source, job.bucketId(), null, 1);
         orders.readBatch(target, job.bucketId(), null, 1);
+
         requireChanged(mappings.beginMigration(job));
         jobs.advance(job, "COPYING");
     }
 
     private void copyNextBatch(MigrationJob job, JdbcTemplate source, JdbcTemplate target) {
         List<Order> batch = orders.readBatch(source, job.bucketId(), job.lastCopiedOrderId(), BATCH_SIZE);
+        // 3번 수정 -> 진욱//
         if (batch.isEmpty()) {
+            orders.readBatch(target, job.bucketId(), null, 1);
             jobs.advance(job, "VERIFYING");
             return;
         }
 
         TransactionTemplate targetTransaction = new TransactionTemplate(
-                new DataSourceTransactionManager(Objects.requireNonNull(target.getDataSource()))
-        );
+                new DataSourceTransactionManager(Objects.requireNonNull(target.getDataSource())));
         targetTransaction.executeWithoutResult(status -> orders.copyBatch(target, batch));
         // 목적지 커밋이 끝난 뒤에만 메타 DB의 체크포인트를 갱신합니다.
         jobs.saveCheckpoint(job, batch.getLast().orderId(), batch.size());
